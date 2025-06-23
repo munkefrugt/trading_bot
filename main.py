@@ -1,22 +1,18 @@
-from get_data import fetch_btc_data
-from analyse import compute_heikin_ashi, compute_ema, compute_ichimoku
-from plot import plot_heikin_ashi_with_indicators
+
+
+from backtest import run_backtest
+from plot import plot_price_with_indicators
 
 def main():
-    # Fetch BTC-USD daily data
-    btc_data = fetch_btc_data()
+    print("💬 Mr. TradeBotCoach Reminder: Before changing strategy logic, update logbook.txt and consult readchatgpt.txt.")
+    data, ema_list, ichimoku, buys, sells, trades = run_backtest()
+    print(f"{len(buys)} buy signals, {len(sells)} sell signals")
+    plot_price_with_indicators(data, ema_list, ichimoku, buy_signals=buys, sell_signals=sells)
+    print("\nTRADE RESULTS:")
+    for t in trades:
+        if not t.is_open():
+            print(f"Trade from {t.entry_date.date()} to {t.exit_date.date()}: "
+                  f"{t.profit():.2f} USD ({t.profit_pct():.2f}%)")
 
-    # Compute Heikin-Ashi candles
-    ha_data = compute_heikin_ashi(btc_data)
-
-    # Compute 200 EMA from original close prices
-    ema200 = compute_ema(btc_data, period=200)
-    ema50 = compute_ema(btc_data, period=50)
-    # Compute Ichimoku indicators from original data
-    ichimoku = compute_ichimoku(btc_data)
-
-    # Plot everything
-    plot_heikin_ashi_with_indicators(ha_data, [ema50, ema200], ichimoku)
-    
 if __name__ == "__main__":
     main()

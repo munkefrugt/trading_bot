@@ -1,0 +1,19 @@
+template:
+==== ENTRY YYYY-MM-DD ====
+Decision: (What you changed or added)
+Reasoning: (Why you made this decision)
+Evidence: (Backtest result / manual inspection / theoretical intuition)
+Assumptions: (What are you assuming to be true?)
+Potential bias: (Are you overfitting / forcing a narrative?)
+Next step: (What should be tested or validated next?)
+===========================
+
+1. entry:
+==== ENTRY 2025-06-18 ====
+Decision: Removed Heikin-Ashi filter from buy logic.
+Reasoning: On visual inspection, Ichimoku trends often span weeks/months while HA candles flip frequently, causing potential missed opportunities.
+Evidence: Plot clearly shows multiple HA color changes during strong Ichimoku trend periods.
+Assumptions: Ichimoku provides sufficient trend confirmation; HA filter adds noise in this context.
+Potential bias: May undervalue HA's micro-timing utility, but willing to simplify for now based on clarity.
+Next step: Tune Ichimoku + EMA combo further or test alternate exit logic.
+===========================
