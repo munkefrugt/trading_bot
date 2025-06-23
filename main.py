@@ -5,9 +5,9 @@ from plot import plot_price_with_indicators
 
 def main():
     print("💬 Mr. TradeBotCoach Reminder: Before changing strategy logic, update logbook.txt and consult readchatgpt.txt.")
-    data, ema_list, ichimoku, buys, sells, trades = run_backtest()
+    data, ema_list, ichimoku, buys, sells, trades, equity = run_backtest()
     print(f"{len(buys)} buy signals, {len(sells)} sell signals")
-    plot_price_with_indicators(data, ema_list, ichimoku, buy_signals=buys, sell_signals=sells)
+    plot_price_with_indicators(data, ema_list, ichimoku, buy_signals=buys, sell_signals=sells, trades=trades, equity_curve=equity)
     print("\nTRADE RESULTS:")
     for t in trades:
         if not t.is_open():
