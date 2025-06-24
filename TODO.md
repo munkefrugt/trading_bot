@@ -25,6 +25,8 @@
   - [ ] **Risk/reward ratio**
   - [ ] **Maximum drawdown**
   - [ ] **Streaks** of wins/losses
+  - [ ] **sharpe ratio?** or some other similiar metric that can beused with relatively few trades and outliers like one big winner.
+
 
 ## ✅ General Enhancements
 

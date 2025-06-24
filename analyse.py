@@ -1,27 +1,6 @@
 import pandas as pd
 
-def compute_heikin_ashi(data):
-    """
-    Takes OHLCV dataframe and returns Heikin-Ashi OHLC dataframe.
-    """
-    ha = pd.DataFrame(index=data.index)
-    
-    ha['Close'] = (data['Open'] + data['High'] + data['Low'] + data['Close']) / 4
 
-    ha['Open'] = 0.0  # placeholder, filled below
-    ha['High'] = 0.0
-    ha['Low'] = 0.0
-
-    for i in range(len(data)):
-        if i == 0:
-            ha.iat[0, ha.columns.get_loc('Open')] = (data['Open'].iloc[0] + data['Close'].iloc[0]) / 2
-        else:
-            ha.iat[i, ha.columns.get_loc('Open')] = (ha['Open'].iloc[i-1] + ha['Close'].iloc[i-1]) / 2
-
-        ha.iat[i, ha.columns.get_loc('High')] = max(data['High'].iloc[i], ha['Open'].iloc[i], ha['Close'].iloc[i])
-        ha.iat[i, ha.columns.get_loc('Low')] = min(data['Low'].iloc[i], ha['Open'].iloc[i], ha['Close'].iloc[i])
-
-    return ha
 
 def compute_ema(data, period=200, column='Close'):
     """
@@ -52,3 +31,20 @@ def compute_ichimoku(data):
     ichimoku['Chikou_span'] = data['Close'].shift(-26)
 
     return ichimoku
+
+def extend_index(df, extra_periods=26):
+    """
+    Extend a DataFrame's index with future periods to hold forward-shifted indicators.
+    """
+    df_extended = df.copy()
+    last_date = df.index[-1]
+    freq = df.index.inferred_freq or pd.infer_freq(df.index)
+    if freq is None:
+        freq = pd.Timedelta(df.index[1] - df.index[0])  # fallback
+
+    if isinstance(freq, str) and not any(char.isdigit() for char in freq):
+        freq = '1' + freq  # Add '1' in front if no number
+    start = last_date + pd.to_timedelta(freq)    
+    new_dates = pd.date_range(start=start, periods=extra_periods, freq=freq)
+    extension = pd.DataFrame(index=new_dates)
+    return pd.concat([df_extended, extension])

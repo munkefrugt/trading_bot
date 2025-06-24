@@ -1,14 +1,15 @@
 from trade import Trade
 from get_data import fetch_btc_data
-from analyse import compute_heikin_ashi, compute_ema, compute_ichimoku
+from analyse import compute_ema, compute_ichimoku , extend_index
 import pandas as pd
 
 def run_backtest():
     data = fetch_btc_data()
+    data = extend_index(data)
     ema50 = compute_ema(data, 50)
     ema200 = compute_ema(data, 200)
     ichimoku = compute_ichimoku(data)
-
+    print(ichimoku.tail(30))
     trades = []
     buy_markers = []
     sell_markers = []
@@ -21,8 +22,7 @@ def run_backtest():
 
     cash = 10000  # Starting capital
 
-    for i in range(52, len(data)):
-
+    for i in range(52, len(data) - 26):
         # === Current date and price ===
         current_date = data.index[i]
         close = data['Close'].iloc[i]
@@ -38,19 +38,27 @@ def run_backtest():
         ema_200 = ema200.iloc[i]
         tenkan = ichimoku['Tenkan_sen'].iloc[i]
         kijun = ichimoku['Kijun_sen'].iloc[i]
-        senkou_a = ichimoku['Senkou_span_A'].iloc[i]
-        senkou_b = ichimoku['Senkou_span_B'].iloc[i]
         chikou = close
         close_26_back = data['Close'].iloc[i - 26] if i >= 26 else None
 
-        # Buy condition
+        senkou_a = ichimoku['Senkou_span_A'].iloc[i]
+        senkou_b = ichimoku['Senkou_span_B'].iloc[i]
+        senkou_a_future = ichimoku['Senkou_span_A'].iloc[i]
+        senkou_b_future = ichimoku['Senkou_span_B'].iloc[i]
+        #senkou_a_prev   = ichimoku['Senkou_span_A'].iloc[i-1]
+
+        #cloud_is_green = senkou_a_future > senkou_b_future
+        #cloud_is_upgoing = senkou_a_future > senkou_a_prev
+        
         buy_signal = (
             close > ema_50 > ema_200 and
-            senkou_a > senkou_b and
+            #cloud_is_green and
+            #cloud_is_upgoing and
             close > max(senkou_a, senkou_b) and
             tenkan > kijun and
-            chikou > close_26_back * 1.01
+            chikou > close_26_back
         )
+
 
         # Sell condition
         sell_signal = (
