@@ -1,13 +1,13 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-def plot_price_with_indicators(data, ema_list, ichimoku, buy_signals=None, sell_signals=None, trades=None, equity_curve=None):
+def plot_price_with_indicators(data, ema_list, ichimoku, buy_signals=None, sell_signals=None, trades=None, equity_curve=None, cash_series=None):
     fig = make_subplots(
-        rows=2, cols=1,
+        rows=3, cols=1,
         shared_xaxes=True,
-        row_heights=[0.75, 0.25],
-        vertical_spacing=0.05,
-        subplot_titles=("Price with Indicators", "Equity Curve")
+        row_heights=[0.6, 0.25, 0.15],
+        vertical_spacing=0.03,
+        subplot_titles=("Price with Indicators", "Equity Curve", "Cash")
     )
 
     # Price candlesticks
@@ -19,6 +19,8 @@ def plot_price_with_indicators(data, ema_list, ichimoku, buy_signals=None, sell_
         close=data['Close'],
         name='Price'
     ), row=1, col=1)
+
+
 
     # EMA lines
     ema_colors = ['blue', 'darkcyan']
@@ -90,11 +92,21 @@ def plot_price_with_indicators(data, ema_list, ichimoku, buy_signals=None, sell_
             line=dict(color='black')
         ), row=2, col=1)
 
+    # Cash subplot
+    if cash_series is not None:
+        fig.add_trace(go.Scatter(
+            x=cash_series.index,
+            y=cash_series,
+            name='Cash',
+            line=dict(color='orange')
+        ), row=3, col=1)
+
     fig.update_layout(
         hovermode='x unified',
         xaxis=dict(rangeslider=dict(visible=False)),
-        xaxis2=dict(title="Date"),
-        yaxis2=dict(title="Cumulative Profit (USD)")
+        xaxis3=dict(title="Date"),
+        yaxis2=dict(title="Cumulative Profit (USD)"),
+        yaxis3=dict(title="Cash (USD)")
     )
 
     fig.show()

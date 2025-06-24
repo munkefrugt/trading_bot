@@ -17,3 +17,24 @@ Assumptions: Ichimoku provides sufficient trend confirmation; HA filter adds noi
 Potential bias: May undervalue HA's micro-timing utility, but willing to simplify for now based on clarity.
 Next step: Tune Ichimoku + EMA combo further or test alternate exit logic.
 ===========================
+
+2. entry
+==== ENTRY 2025-06-23 ====
+Decision: Continue using single-asset BTC strategy with 2% risk-based position sizing, and intentionally ignore idle cash for now.
+Reasoning: Current strategy limits risk per trade to 2% of equity based on stoploss distance, which often leads to small position sizes and unused capital. While this leaves much of the portfolio in cash, that is expected at this stage. Rather than forcing larger trades or adding leverage, the long-term plan is to increase trade frequency by applying this same strategy logic across multiple uncorrelated assets.
+Evidence: First trade only used ~$1,100 out of $10,000 due to distant stoploss, which is consistent with current risk rules. Equity and cash plots confirmed underutilized capital.
+Assumptions: It is acceptable for capital to sit unused if no qualifying trade is available. Strategy will remain conservative until broader asset testing is implemented.
+Potential bias: Could be prematurely assuming idle cash is a problem before confirming strategy viability on BTC alone.
+Next step: Continue testing current BTC logic. When ready, refactor to loop over multiple tickers and aggregate equity for portfolio-wide analysis.
+===========================
+
+3.entry
+==== ENTRY 2025-06-24 ====
+Decision: Refined Chikou logic — replaced ambiguous Chikou condition with `close < close_26_back` for sell signals and added `chikou > close_26_back` to buy signal. Created `todo.md` to track upcoming improvements.
+Reasoning: Realized that Chikou is simply the current close plotted 26 periods back, so comparing it to current price is redundant. True Ichimoku interpretation suggests comparing current close to 26-day-old close directly. Also clarified that "clear line of sight" from Chikou to present is key for strong buy signals.
+Evidence: Visual confirmation via plots showed trades now align better with intended Ichimoku logic. Many sell signals now happen near tops, suggesting better timing.
+Assumptions: Assuming that strict Ichimoku alignment (including Senkou and Chikou breakout rules) leads to better long-term signal quality. Also assuming that using close vs close_26_back is a valid shortcut for Chikou behavior.
+Potential bias: Risk of overfitting rules too strictly to the visible chart. Might limit trades in choppy or sideways markets where soft signals could still be valid. Also leaning on visual confirmation, which can be subjective.
+Next step: Add proper logging of win rate, risk/reward, max drawdown, and streaks. Improve stoploss logic — test Senkou B and trailing stops. Implement "clear sight" condition formally. Consider using future cloud slope as buy filter. Add cloud reversal as sell trigger.
+===========================
+

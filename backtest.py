@@ -14,14 +14,24 @@ def run_backtest():
     sell_markers = []
     open_trades = []
 
+    cash_series = []
+
     equity_series = []
     equity_index = []
 
     cash = 10000  # Starting capital
 
     for i in range(52, len(data)):
+
+        # === Current date and price ===
         current_date = data.index[i]
         close = data['Close'].iloc[i]
+
+        # === Equity snapshot before any new trades or exits ===
+        current_equity = cash + sum(t.quantity * close for t in open_trades)
+        equity_series.append(current_equity)
+        equity_index.append(current_date)
+        cash_series.append(cash)
 
         # Indicator values
         ema_50 = ema50.iloc[i]
@@ -30,7 +40,7 @@ def run_backtest():
         kijun = ichimoku['Kijun_sen'].iloc[i]
         senkou_a = ichimoku['Senkou_span_A'].iloc[i]
         senkou_b = ichimoku['Senkou_span_B'].iloc[i]
-        chikou = ichimoku['Chikou_span'].iloc[i] if i < len(data) else None
+        chikou = close
         close_26_back = data['Close'].iloc[i - 26] if i >= 26 else None
 
         # Buy condition
@@ -38,12 +48,13 @@ def run_backtest():
             close > ema_50 > ema_200 and
             senkou_a > senkou_b and
             close > max(senkou_a, senkou_b) and
-            tenkan > kijun
+            tenkan > kijun and
+            chikou > close_26_back * 1.01
         )
 
         # Sell condition
         sell_signal = (
-            chikou is not None and close_26_back is not None and chikou < close_26_back
+            chikou < close_26_back
         )
 
         # Position sizing based on stoploss and risk
@@ -72,18 +83,22 @@ def run_backtest():
 
         # Check each open trade for stoploss or sell signal
         for trade in open_trades[:]:
-            if trade.is_stopped_out(close) or sell_signal:
+            if trade.is_stopped_out(close):
+                print(f"💥 STOPLOSS on {current_date.date()} | Close={close:.2f} | Stoploss={trade.stoploss:.2f}")
                 trade.close(exit_date=current_date, exit_price=close)
                 cash += trade.exit_price * trade.quantity
                 sell_markers.append((current_date, close))
                 open_trades.remove(trade)
 
-        # Equity = cash + current unrealized gains
-        unrealized = sum((close - t.entry_price) * t.quantity for t in open_trades)
-        equity_series.append(cash + unrealized)
-        equity_index.append(current_date)
+            elif sell_signal:
+                print(f"🔻 SELL SIGNAL on {current_date.date()} | Chikou={chikou:.2f} vs Close={close:.2f} | Trade Entry: {trade.entry_date.date()} @ {trade.entry_price:.2f}")
+                trade.close(exit_date=current_date, exit_price=close)
+                cash += trade.exit_price * trade.quantity
+                sell_markers.append((current_date, close))
+                open_trades.remove(trade)
+
 
     equity_df = pd.Series(equity_series, index=equity_index, name="Equity")
     equity_df = equity_df.reindex(data.index).ffill().fillna(method="bfill")
-
-    return data, [ema50, ema200], ichimoku, buy_markers, sell_markers, trades, equity_df
+    cash_df = pd.Series(cash_series, index=equity_index, name="Cash")
+    return data, [ema50, ema200], ichimoku, buy_markers, sell_markers, trades, equity_df, cash_df
