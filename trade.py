@@ -1,9 +1,11 @@
 class Trade:
-    def __init__(self, entry_date, entry_price, quantity=1, stoploss=None):
+    def __init__(self, entry_date, entry_price, entry_equity, quantity=1, stoploss=None ):
         self.entry_date = entry_date
         self.entry_price = entry_price
+        self.entry_equity = entry_equity
         self.exit_date = None
         self.exit_price = None
+
         self.quantity = quantity
         self.stoploss = stoploss
         self.status = 'open'

@@ -7,7 +7,7 @@
   - Ensure **Chikou Span** is clearly above:
     - All candlesticks in the past 26 periods
     - The cloud (Senkou A & B)
-  - Ensure "clear sight" from Chikou to current price (no cloud or candle interference)
+  - !!!Ensure "clear sight" from Chikou to current price (no cloud or candle interference)
 
 - [ ] Refine **Sell Signal**:
   - Add **cloud reversal** detection

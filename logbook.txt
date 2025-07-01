@@ -38,3 +38,164 @@ Potential bias: Risk of overfitting rules too strictly to the visible chart. Mig
 Next step: Add proper logging of win rate, risk/reward, max drawdown, and streaks. Improve stoploss logic — test Senkou B and trailing stops. Implement "clear sight" condition formally. Consider using future cloud slope as buy filter. Add cloud reversal as sell trigger.
 ===========================
 
+4. entry
+==== ENTRY 2025-06-25 ====
+Decision: Added strategy idea to explore Weekly Heikin-Ashi + Ichimoku Cloud trend alignment.
+Reasoning: Simpler and more visual trend-following logic using weekly Heikin-Ashi candle flips in combination with a rising green Ichimoku cloud may provide cleaner, more reliable signals with less noise than current daily logic.
+Evidence: Manual inspection of weekly charts suggests strong trends often begin with HA flips and upward-sloping green clouds. Current daily Ichimoku strategy shows good performance but might benefit from confirmation from a broader timeframe.
+Assumptions: Weekly Heikin-Ashi smooths out market noise and provides better trend entry timing. A rising Senkou B slope signals emerging momentum. Combining both could reduce whipsaw trades and improve trend capture.
+Potential bias: Risk of anchoring to visual patterns that “look good” but may not generalize. Idea stems from theory and visual inspection, not yet tested. Also possible that longer timeframe signals may lag and reduce trade frequency.
+Next step: Overlay weekly Heikin-Ashi candles and Ichimoku cloud on the current daily plot. Evaluate how well this filter would align with previous profitable trades. If promising, test this logic in a separate strategy module for backtesting.
+===========================
+
+5. entry
+==== ENTRY 2025-06-25 ====
+Decision: nearly Documented new swing trading concept using weekly Heikin-Ashi + Ichimoku cloud as a coarse filter for high-quality trend entries across multiple assets.
+Reasoning: The strategy is designed to produce very few but high-conviction signals per asset, making it ideal for scanning many stocks and cryptos in parallel. The goal is to "always" have at least one strong trade opportunity waiting — even if not fully invested. It's about catching big trend moves with simple, visual rules.
+Evidence: Manual inspection shows that these signals often align with large breakouts or sustained trends. The strategy avoids noise and focuses on clean momentum phases, making it well-suited for swing trading rather than constant monitoring.
+Assumptions: Assuming that by applying this logic across a broad universe of assets, there will consistently be a few top-tier entries available. Also assuming weekly signals are strong enough to justify swing holds and that trends persist long enough to act on manually.
+Potential bias: May be biased toward the "less is more" appeal of the system and could underestimate how rarely good setups appear in some markets. There's also the risk of ignoring risk management if too focused on always having "a trade on."
+Next step: Add weekly overlays to existing chart. Begin testing this logic across multiple assets to evaluate if there's always a strong signal available. Consider building multi-asset backtest support.
+===========================
+
+6. entry
+==== ENTRY 2025-06-26 ====
+Decision: Corrected the Heikin-Ashi open calculation to use the standard formula (prev HA Open + prev HA Close) / 2, and updated wick calculation to include HA values.
+Reasoning: The previous version used the regular OHLC to calculate HA Open, which caused the candles to resemble standard candles rather than proper Heikin-Ashi ones. This broke the visual trend smoothing HA is supposed to provide.
+Evidence: Visual inspection now matches TradingView’s HA plots. Candles open mid-body, trends appear smoother, and wick placement is now correct.
+Assumptions: TradingView’s HA candles follow the classic formula and are a trustworthy visual reference.
+Potential bias: Manual visual confirmation is subjective; no functional tests were done yet to verify if this affects backtest signals (though it shouldn't).
+Next step: Verify whether any trading signal logic depends on the HA Open. If so, re-test to ensure no regression.
+===========================
+
+7. entry
+==== ENTRY 2025-06-25 ====
+Decision:
+Logged the current strategy and backtest results for future comparison before switching to a new swing trading strategy with weekly Ichimoku filters.
+
+Reasoning:
+This strategy served as a baseline and performed decently. Before replacing it with a stricter swing strategy, I want a reference point to compare metrics.
+
+Evidence:
+📊 PERFORMANCE METRICS  
+Win Rate:          63.16%  
+Avg Win:           459.18 USD (42.51%)  
+Avg Loss:          -93.84 USD (-3.45%)  
+Profit Factor:     8.39  
+Total Return:      4853.28  
+Max Drawdown USD:  531.20  
+Max Drawdown %:    10.95%  
+Max Win Streak:    3  
+Max Loss Streak:   2  
+Avg Daily Return:   8.20 USD/day  
+
+📈 TRADE RETURN DISTRIBUTION (win/loss per trade):  
+-10% to -5%        | 2  
+-5% to 0%          | 5  
+0% to 5%           | 2  
+5% to 10%          | 2  
+         13.87%    | 1  
+15% to 20%         | 2  
+         26.66%    | 1  
+         45.93%    | 1  
+         58.17%    | 1  
+        105.88%    | 1  
+        208.51%    | 1  
+
+Assumptions:
+The strategy benefits from short-to-medium-term trends where EMA structure and cloud direction provide meaningful signals. Past success may not generalize across other assets or market regimes.
+
+Potential bias:
+These results could be overfit to this dataset. Also, since trades were relatively few, the high profit factor may not hold across broader testing.
+
+Next step:
+Switch to a stricter filter using weekly Ichimoku cloud and weekly Heikin Ashi candles. Begin testing it across multiple cryptos and stocks to increase signal frequency.
+
+Strategy code:
+
+```python
+buy_signal = (
+    close > ema_50 > ema_200 and
+    cloud_future_is_green and
+    cloud_future_is_upgoing and
+    close > max(senkou_a, senkou_b) and
+    tenkan > kijun and
+    chikou > close_26_back
+)
+
+sell_signal = (
+    chikou < close_26_back
+)
+===========================
+
+8. entry: 
+==== ENTRY 2025-06-25 ====
+Decision:  
+Pivoting from the current daily Ichimoku strategy to testing a weekly-based Heikin-Ashi + Ichimoku strategy with a stricter trend filter. Old strategy will be kept for comparison.
+
+Reasoning:  
+The old strategy works, but doesn't fully align with my preference for clarity and strong trend capture. The weekly Ichimoku + HA combo seems to give fewer, but much cleaner and larger trend trades — more swing-trading style. It also allows for better decision-making under low stress and potentially better safety if I go offline.
+
+Evidence:  
+Preliminary visual inspection shows clearer entries and exits on weekly Heikin-Ashi + Ichimoku setups. Strategy appears to nail large trends while filtering out noise. Daily timeframe doesn't pair well with HA and Ichimoku, but weekly does. However, backtesting still pending for this new version.
+
+Assumptions:  
+- Weekly filters reduce noise and overtrading.  
+- A coarse but high-quality signal across multiple assets is better than many small signals.  
+- Heikin-Ashi works better in trend recognition on weekly candles.  
+- I can use daily or intraday timeframes for exit precision or entry timing.
+
+Potential bias:  
+Confirmation bias from inspecting only a few trades. Strategy hasn't yet been tested across unseen data or assets. Risk of overfitting perception based on visual clarity and low sample size. Also possible "shiny new thing" syndrome.
+
+Goal clarity:  
+A realistic and strong benchmark is 30–40% annual return with reasonable drawdowns. If the strategy consistently outperforms SP500 or BRK.B with lower volatility, it’s already in the “keep it” category. 100% annual returns are nice to dream of, but not required for success.
+
+Next step:  
+- Implement new strategy logic in parallel.  
+- Run comparative backtests.  
+- Use "profit per day" and drawdown as evaluation metrics.  
+- Define clear criteria for what makes a strategy a "keeper".  
+- Log results and reassess with real data.
+
+===========================
+
+==== ENTRY 2025-06-26 ====
+Decision: 
+Began implementing a weekly Ichimoku cloud filter as a course condition for entering trades. Merged weekly Heikin-Ashi and Ichimoku data into the daily DataFrame using forward-fill.
+
+Reasoning: 
+The goal is to focus on large trends and avoid choppy signals. Weekly clouds tend to smooth out noise, and aligning daily trades with a green, rising weekly cloud may improve win rate and trend capture.
+
+Evidence: 
+Theoretical intuition and visual inspection of TradingView charts suggest that major uptrends are often preceded by a long flat Senkou B followed by a clear upward slope. No backtest yet.
+
+Assumptions: 
+- Weekly trend direction provides useful high-level filters.
+- Forward-filling weekly data into daily is valid for signaling.
+- A rising Senkou B marks the start of major trends.
+
+Potential bias: 
+There’s a risk of confirmation bias from limited visual examples and potentially overfitting to recent BTC/USD patterns. Also might be discarding a well-performing “simple” strategy before it's fully evaluated.
+
+Next step: 
+- Finish coding the course filter based on weekly Ichimoku.
+- Use `.diff()` or slope detection to verify upward Senkou B.
+- Add plotting or console prints to validate the filter.
+- Run backtest with the course filter added to measure performance and number of trades.
+===========================
+
+9. entry: 
+==== ENTRY 2025-06-30 ====
+Decision: Clarified the meaning of "Avg Win/Loss %" in `analyze_performance` to explicitly state it is relative to entry price, not total equity. No functional change in calculation; just renamed the variable and label to avoid confusion.
+
+Reasoning: The term “Avg Win %” could be misinterpreted as a return relative to total equity. It actually represents the average profit as a percentage of entry price, so clearer naming improves accuracy and communication of results.
+
+Evidence: Manual inspection of the code confirms that percentage is calculated using `(profit / (entry_price * quantity)) * 100`, which is based on the position’s entry cost, not account equity.
+
+Assumptions: The audience reading these metrics understands the distinction between position-relative returns and equity-relative returns.
+
+Potential bias: None at this point. This is purely a documentation/clarity fix, not a logic or model change.
+
+Next step: Improve entry and exit signals to reduce variance and improve win/loss consistency. Consider experimenting with new filters or conditions to reduce false positives.
+===========================

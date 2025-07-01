@@ -48,3 +48,19 @@ def extend_index(df, extra_periods=26):
     new_dates = pd.date_range(start=start, periods=extra_periods, freq=freq)
     extension = pd.DataFrame(index=new_dates)
     return pd.concat([df_extended, extension])
+
+def compute_heikin_ashi(data):
+    ha = pd.DataFrame(index=data.index)
+    ha['Close'] = (data['Open'] + data['High'] + data['Low'] + data['Close']) / 4
+
+    ha['Open'] = 0.0
+    ha.iloc[0, ha.columns.get_loc('Open')] = (data['Open'].iloc[0] + data['Close'].iloc[0]) / 2  # seed first open
+
+    for i in range(1, len(data)):
+        ha.iloc[i, ha.columns.get_loc('Open')] = (ha.iloc[i-1]['Open'] + ha.iloc[i-1]['Close']) / 2
+
+    # Use HA open/close in high/low calc
+    ha['High'] = pd.concat([data['High'], ha['Open'], ha['Close']], axis=1).max(axis=1)
+    ha['Low'] = pd.concat([data['Low'], ha['Open'], ha['Close']], axis=1).min(axis=1)
+
+    return ha
