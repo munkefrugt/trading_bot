@@ -5,7 +5,7 @@ class Trade:
         self.entry_equity = entry_equity
         self.exit_date = None
         self.exit_price = None
-
+        self.stoploss_mode = "relaxed"  # default mode
         self.quantity = quantity
         self.stoploss = stoploss
         self.status = 'open'

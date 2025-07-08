@@ -1,0 +1,43 @@
+| Start: Is there an open trade?
+|--> No → [Do nothing. Exit.]
+|
+|--> Yes →
+     |
+     | === RELAXED FLYING PATH ===
+     | Is the sky clear?
+     |--> Future cloud is green and rising (Senkou A and B positive slope)?
+     |--> Price > EMA 50 > EMA 200?
+     |--> EMA 50 and EMA 200 are rising?
+     |--> No red/reversal Weekly Heikin-Ashi candles?
+     |--> Chikou Span is clear of past price and cloud?
+     |-->→ If ALL TRUE →
+     |         [Let go — Loose stop at EMA 50]
+     |         [SKIP remaining checks. Continue flying.]
+     |
+     | === HOLD TIGHT PATH (Storm may be coming) ===
+     | If ANY of the following:
+     |     |--> Future cloud turning red?
+     |     |--> Tenkan crossing below Kijun?
+     |     |--> Chikou Span dipping into past prices?
+     |     |--> Daily HA candle turns red? (Not implemented yet)
+     |     |--> EMA 20 slope flattens or turns down?
+     |     |-->→ Then → [Tighten stoploss to Tenkan]
+     |
+     | Signs of serious descent?
+     |     |--> Weekly HA candle turns red?
+     |     |--> Strong red HA + high volume? (Volume not yet available)
+     |     |--> Price drops deeply into cloud?
+     |     |--> Chikou Span collides with past cloud or price?
+     |     |-->→ Then → [Prepare to exit — look for a nearby top, check last if top missed]
+     |
+     | Emergency triggers?
+     |     |--> Price falls below current stoploss?
+     |     |-->→ Then → [💥 Exit now — emergency landing]
+     |
+     | Extreme airlift peak scenario?
+     |     |--> Try to detect a parabolic curve top
+     |     |--> Look for 2 tall, high-body, low-wick candles
+     |     |-->→ Then → [Exit before blow-off top]
+     |
+     | Otherwise →
+     |     |--> [Hold with current stop condition]

@@ -199,3 +199,55 @@ Potential bias: None at this point. This is purely a documentation/clarity fix, 
 
 Next step: Improve entry and exit signals to reduce variance and improve win/loss consistency. Consider experimenting with new filters or conditions to reduce false positives.
 ===========================
+
+10. 
+==== ENTRY 2025-07-03 ====
+Decision: Implemented the "Balloon Strategy" pseudocode into `sell.txt` as a framework for sell logic based on metaphorical flight conditions.
+
+Reasoning: The previous exit logic felt arbitrary and visually inconsistent when reviewing trades. The new metaphor offers a layered decision-making structure — from relaxed trend riding to emergency exits — that mimics how a balloon pilot would respond to shifting weather patterns.
+
+Evidence: Manual inspection of plotted trades revealed that some exits were triggered despite conditions still being favorable (e.g., price far above cloud, no weakness in trend). The strategy was often too reactive. Inspired by this, the balloon model was created to better mimic how a trader might *feel* through trend transitions while still rooted in indicators.
+
+Assumptions:
+- Trends can be classified like weather: clear sky = strong trend continuation; turbulence = potential correction.
+- Indicators like Ichimoku cloud, EMA slope, and Heikin-Ashi color can act as weather signals.
+- It's possible to reduce unnecessary exits by recognizing “safe skies.”
+- Price and trend structure often give early signs before a sharp drop — if we’re looking for them.
+
+Potential bias:
+- Heavy metaphor use could lead to overfitting narrative onto market noise.
+- Still lacks backtested data; current logic is intuitive and not yet validated statistically.
+- The "emergency exit" logic relies on subjective pattern recognition (e.g., parabolic blow-off tops), which may be hard to automate robustly.
+
+Next step:
+- Convert `sell.txt` pseudocode into a working `sell.py` module with real indicator checks.
+- Implement step-by-step and test each path (relaxed flying, tighten stop, emergency) against historical trades.
+- Backtest the balloon strategy and compare performance metrics (win rate, avg profit, drawdown) to previous logic.
+===========================
+
+
+==== ENTRY 2025-07-07 ====
+Decision: 
+Switched from simple Chikou-based exit logic to a flowchart-based sell logic using EMA trends, Tenkan/Kijun, Heikin-Ashi candles, and future cloud slope.
+
+Reasoning:
+Wanted a more sophisticated trailing stop mechanism that adapts to trend quality and cloud shape. Inspired by a pilot metaphor: relaxed flying vs. tightening controls in turbulence.
+
+Evidence:
+Backtest shows lower total profit compared to the simpler Chikou exit. Fewer exits occurred due to more complex conditions being required, which sometimes resulted in holding through downturns.
+
+Assumptions:
+- More context-aware logic (cloud, candles) would avoid premature exits.
+- Combining multiple weak signals can outperform a single strong one.
+
+Potential bias:
+Yes — overfitting danger. Flowchart logic is handpicked and tuned based on theoretical intuition, not robustly tested. Possibly biased toward “cleverness” instead of performance.
+
+Next step:
+Run side-by-side comparison backtests:
+- Strategy A: Simple Chikou exit
+- Strategy B: Flowchart logic
+Log metrics: win rate, profit factor, drawdown, average trade duration.
+
+Also: add a mode switch in `sell.py` to toggle between modes easily.
+===========================

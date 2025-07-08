@@ -2,6 +2,7 @@ from trade import Trade
 from get_data import fetch_btc_data, fetch_btc_weekly_data, extend_weekly_index
 from analyse import compute_ema, compute_ichimoku , extend_index, compute_heikin_ashi
 from align_data_time import get_data_with_indicators_and_time_alignment
+from sell import sell_check
 import pandas as pd
 
 def run_backtest():
@@ -74,7 +75,7 @@ def run_backtest():
             close > ema_50 > ema_200 and
             cloud_future_is_green and
             cloud_future_is_upgoing and
-            close > max(senkou_a, senkou_b) and
+            close > max(senkou_a, senkou_b) and 
             tenkan > kijun and
             chikou > close_26_back and 
             chikou_has_clear_sight and
@@ -112,22 +113,29 @@ def run_backtest():
                     open_trades.append(trade)
                     buy_markers.append((current_date, close))
                     cash -= cost
+        
+        # # Check each open trade for stoploss or sell signal
+        # for trade in open_trades[:]:
+        #     if trade.is_stopped_out(close):
+        #         print(f"💥 STOPLOSS on {current_date.date()} | Close={close:.2f} | Stoploss={trade.stoploss:.2f}")
+        #         trade.close(exit_date=current_date, exit_price=close)
+        #         cash += trade.exit_price * trade.quantity
+        #         sell_markers.append((current_date, close))
+        #         open_trades.remove(trade)
 
-        # Check each open trade for stoploss or sell signal
-        for trade in open_trades[:]:
-            if trade.is_stopped_out(close):
-                print(f"💥 STOPLOSS on {current_date.date()} | Close={close:.2f} | Stoploss={trade.stoploss:.2f}")
-                trade.close(exit_date=current_date, exit_price=close)
-                cash += trade.exit_price * trade.quantity
-                sell_markers.append((current_date, close))
-                open_trades.remove(trade)
-
-            elif sell_signal:
-                print(f"🔻 SELL SIGNAL on {current_date.date()} | Chikou={chikou:.2f} vs Close={close:.2f} | Trade Entry: {trade.entry_date.date()} @ {trade.entry_price:.2f}")
-                trade.close(exit_date=current_date, exit_price=close)
-                cash += trade.exit_price * trade.quantity
-                sell_markers.append((current_date, close))
-                open_trades.remove(trade)
+        #     elif sell_signal:
+        #         print(f"🔻 SELL SIGNAL on {current_date.date()} | Chikou={chikou:.2f} vs Close={close:.2f} | Trade Entry: {trade.entry_date.date()} @ {trade.entry_price:.2f}")
+        #         trade.close(exit_date=current_date, exit_price=close)
+        #         cash += trade.exit_price * trade.quantity
+        #         sell_markers.append((current_date, close))
+        #         open_trades.remove(trade)
+        open_trades, cash, sell_markers = sell_check( # det er måske bedre med bare chikou!!!
+            open_trades=open_trades,
+            data=data,
+            i=i,
+            cash=cash,
+            sell_markers=sell_markers
+        )
 
 
     equity_df = pd.Series(equity_series, index=equity_index, name="Equity")
