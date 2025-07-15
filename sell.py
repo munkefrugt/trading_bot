@@ -3,7 +3,7 @@ from trade import Trade
 def sell_check(open_trades, data, i, cash, sell_markers):
     current_date = data.index[i]
 
-    close = data['Close'].iloc[i]
+    close = data['D_Close'].iloc[i]
     ema_50 = data['EMA_50'].iloc[i]
 
     # Weekly Heikin-Ashi values

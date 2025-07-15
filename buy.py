@@ -5,9 +5,9 @@ def buy_check(open_trades, data, i, cash, buy_markers, equity, trades):
         return open_trades, cash, buy_markers, trades  # Prevent out-of-range errors
 
     current_date = data.index[i]
-    close = data['Close'].iloc[i]
+    close = data['D_Close'].iloc[i]
     chikou = data['D_Chikou_span'].iloc[i]
-    close_26_back = data['Close'].iloc[i - 26]
+    close_26_back = data['D_Close'].iloc[i - 26]
 
     # === Indicators ===
     ema_50 = data['EMA_50'].iloc[i]
@@ -32,13 +32,28 @@ def buy_check(open_trades, data, i, cash, buy_markers, equity, trades):
     if chikou_index < 26:
         return open_trades, cash, buy_markers, trades  # Avoid negative index
 
+    # === Daily Chikou Clearance ===
     chikou_clearance_level = max(
-        data['High'].iloc[chikou_index - 26:chikou_index].max(),
+        data['D_High'].iloc[chikou_index - 26:chikou_index].max(),
         data['D_Senkou_span_A'].iloc[chikou_index - 26:chikou_index].max(),
         data['D_Senkou_span_B'].iloc[chikou_index - 26:chikou_index].max()
     )
     chikou_has_clear_sight = chikou > chikou_clearance_level
 
+    # === Weekly Chikou Clearance ===
+    chikou_weekly = data['W_Chikou_span'].iloc[i]
+    weekly_chikou_index = i - 26
+    if weekly_chikou_index < 26:
+        return open_trades, cash, buy_markers, trades
+
+    weekly_chikou_clearance_level = max(
+        data['W_High'].iloc[weekly_chikou_index - 26:weekly_chikou_index].max(),
+        data['W_Senkou_span_A'].iloc[weekly_chikou_index - 26:weekly_chikou_index].max(),
+        data['W_Senkou_span_B'].iloc[weekly_chikou_index - 26:weekly_chikou_index].max()
+    )
+    weekly_chikou_has_clear_sight = chikou_weekly > weekly_chikou_clearance_level
+
+    # === Trend logic ===
     ema200_is_rising = ema_200 > ema_200_past
     ema_close_together = abs(ema_50 - ema_200) / ema_200 < 0.7
 
@@ -51,6 +66,7 @@ def buy_check(open_trades, data, i, cash, buy_markers, equity, trades):
         ema_close_together and
         not open_trades and
         chikou_has_clear_sight and
+        weekly_chikou_has_clear_sight and
         cloud_future_is_green and
         cloud_future_is_upgoing and
         senkou_b_rising

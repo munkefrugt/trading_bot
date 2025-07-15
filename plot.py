@@ -1,10 +1,15 @@
 import plotly.graph_objects as go
 import pandas as pd
 from plotly.subplots import make_subplots
-def plot_price_with_indicators(data,
-                                buy_signals=None, sell_signals=None,
-                                trades=None, equity_curve=None, cash_series=None,
-                                weekly_ha=None, weekly_cloud=None):
+
+def plot_price_with_indicators(
+    data,
+    buy_signals=None, 
+    sell_signals=None,
+    trades=None, 
+    equity_curve=None, 
+    cash_series=None
+):
     fig = make_subplots(
         rows=3, cols=1,
         shared_xaxes=True,
@@ -16,13 +21,12 @@ def plot_price_with_indicators(data,
     # === Daily price candlesticks ===
     fig.add_trace(go.Candlestick(
         x=data.index,
-        open=data['Open'],
-        high=data['High'],
-        low=data['Low'],
-        close=data['Close'],
+        open=data['D_Open'],
+        high=data['D_High'],
+        low=data['D_Low'],
+        close=data['D_Close'],
         name='Daily',
-        visible=True, 
-        #visible='legendonly'
+        visible=True
     ), row=1, col=1)
 
     # === Daily EMA lines ===
@@ -40,7 +44,7 @@ def plot_price_with_indicators(data,
                 line=dict(color=color, width=1)
             ), row=1, col=1)
 
-        # === Donchian Channel (52-week high/low) ===
+    # === Donchian Channel ===
     if 'DC_Upper_365' in data.columns:
         fig.add_trace(go.Scatter(
             x=data.index,
@@ -68,8 +72,7 @@ def plot_price_with_indicators(data,
             line=dict(color='gray', width=1, dash='dot')
         ), row=1, col=1)
 
-
-    # === Ichimoku Lines ===
+    # === Daily Ichimoku Lines ===
     ichimoku_lines = {
         'D_Tenkan_sen': ('orange', 'Tenkan-sen'),
         'D_Kijun_sen': ('purple', 'Kijun-sen'),
@@ -88,7 +91,7 @@ def plot_price_with_indicators(data,
                 line=dict(color=color, width=1)
             ), row=1, col=1)
 
-    # === Ichimoku Cloud fill ===
+    # === Ichimoku Cloud fill (Daily) ===
     if 'D_Senkou_span_A' in data.columns and 'D_Senkou_span_B' in data.columns:
         fig.add_trace(go.Scatter(
             x=data.index,
@@ -105,12 +108,12 @@ def plot_price_with_indicators(data,
             name='Ichimoku Cloud'
         ), row=1, col=1)
 
-    # === Weekly Ichimoku directly from data[] (reindexed) ===
+    # === Weekly Ichimoku (dot lines) ===
     ichimoku_weekly_lines = {
         'W_Tenkan_sen': ('orange', 'W Tenkan-sen'),
         'W_Kijun_sen': ('purple', 'W Kijun-sen'),
-        'W_Senkou_span_A': ('lightgreen', 'W Senkou A (in data)'),
-        'W_Senkou_span_B': ('lightcoral', 'W Senkou B (in data)'),
+        'W_Senkou_span_A': ('lightgreen', 'W Senkou A'),
+        'W_Senkou_span_B': ('lightcoral', 'W Senkou B'),
         'W_Chikou_span': ('gray', 'W Chikou')
     }
 
@@ -124,20 +127,18 @@ def plot_price_with_indicators(data,
                 line=dict(color=color, width=3, dash='dot')
             ), row=1, col=1)
 
-    # === Buy/Sell Markers ===
+    # === Buy Markers ===
     if buy_signals:
         buy_x, buy_y = zip(*buy_signals)
-        fig.add_trace(go.Scatter(x=buy_x, y=buy_y, mode='markers',
-                                 name='Buy Signal',
-                                 marker=dict(color='green', size=20, symbol='triangle-up')), row=1, col=1)
-    # === Buy/Sell Markers ===
-    if buy_signals:
-        buy_x, buy_y = zip(*buy_signals)
-        fig.add_trace(go.Scatter(x=buy_x, y=buy_y, mode='markers',
-                                 name='Buy Signal',
-                                 marker=dict(color='green', size=20, symbol='triangle-up')), row=1, col=1)
+        fig.add_trace(go.Scatter(
+            x=buy_x,
+            y=buy_y,
+            mode='markers',
+            name='Buy Signal',
+            marker=dict(color='green', size=20, symbol='triangle-up')
+        ), row=1, col=1)
 
-    # === Future Senkou A marker at time of buy ===
+        # Future Senkou A at time of buy
         if 'D_Senkou_span_A' in data.columns:
             projected_dates = []
             projected_values = []
@@ -157,65 +158,36 @@ def plot_price_with_indicators(data,
                 marker=dict(color='black', size=10, symbol='star')
             ), row=1, col=1)
 
+        # Chikou span marker at buy
+        if 'D_Chikou_span' in data.columns:
+            chikou_dates = []
+            chikou_values = []
+            for date, _ in buy_signals:
+                if date in data.index:
+                    idx = data.index.get_loc(date)
+                    chikou_idx = idx - 26
+                    if chikou_idx >= 0:
+                        chikou_dates.append(data.index[chikou_idx])
+                        chikou_values.append(data['D_Close'].iloc[idx])
 
+            fig.add_trace(go.Scatter(
+                x=chikou_dates,
+                y=chikou_values,
+                mode='markers',
+                name='Chikou Span @ Buy',
+                marker=dict(color='purple', size=10, symbol='square')
+            ), row=1, col=1)
+
+    # === Sell Markers ===
     if sell_signals:
         sell_x, sell_y = zip(*sell_signals)
-        fig.add_trace(go.Scatter(x=sell_x, y=sell_y, mode='markers',
-                                 name='Sell Signal',
-                                 marker=dict(color='red', size=20, symbol='triangle-down')), row=1, col=1)
-
-
-    # === Chikou Span marker at time of buy ===
-    if 'D_Chikou_span' in data.columns:
-        chikou_dates = []
-        chikou_values = []
-        for date, _ in buy_signals:
-            if date in data.index:
-                idx = data.index.get_loc(date)
-                chikou_idx = idx - 26
-                if chikou_idx >= 0:
-                    chikou_dates.append(data.index[chikou_idx])
-                    chikou_values.append(data['Close'].iloc[idx])  # Use close at time of buy
-
         fig.add_trace(go.Scatter(
-            x=chikou_dates,
-            y=chikou_values,
+            x=sell_x,
+            y=sell_y,
             mode='markers',
-            name='Chikou Span @ Buy',
-            marker=dict(color='purple', size=10, symbol='square')
+            name='Sell Signal',
+            marker=dict(color='red', size=20, symbol='triangle-down')
         ), row=1, col=1)
-
-
-    # === Weekly HA candles overlay ===
-    if weekly_ha is not None:
-        fig.add_trace(go.Candlestick(
-            x=weekly_ha.index,
-            open=weekly_ha['Open'],
-            high=weekly_ha['High'],
-            low=weekly_ha['Low'],
-            close=weekly_ha['Close'],
-            name='Weekly HA',
-            increasing_line_color='blue',
-            decreasing_line_color='gold',
-            opacity=0.8,
-            showlegend=True
-        ), row=1, col=1)
-
-    # === Weekly Ichimoku Overlay ===
-    if weekly_cloud is not None:
-        for line, color, label in zip(
-            ['Senkou_span_A', 'Senkou_span_B'],
-            ['lightgreen', 'lightcoral'],
-            ['Weekly Senkou A', 'Weekly Senkou B']
-        ):
-            if line in weekly_cloud.columns:
-                fig.add_trace(go.Scatter(
-                    x=weekly_cloud.index,
-                    y=weekly_cloud[line],
-                    mode='lines',
-                    name=label,
-                    line=dict(color=color, width=2, dash='dash')
-                ), row=1, col=1)
 
     # === Equity subplot ===
     if equity_curve is not None:
