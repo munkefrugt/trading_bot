@@ -1,7 +1,10 @@
 import yfinance as yf
 import pandas as pd
 
-def fetch_btc_data(start="2015-01-01", end="2025-07-08", interval="1d"):
+start = "2015-01-01"
+end = "2025-07-13"
+
+def fetch_btc_data(start=start, end=end, interval="1d"):
     data = yf.download("BTC-USD", start=start, end=end, interval=interval, auto_adjust=False)
     
     # Flatten multi-level column names if needed
@@ -10,7 +13,7 @@ def fetch_btc_data(start="2015-01-01", end="2025-07-08", interval="1d"):
     
     return data
 
-def fetch_btc_weekly_data(start="2015-01-01", end="2025-07-08"):
+def fetch_btc_weekly_data(start=start, end=end):
     return fetch_btc_data(start=start, end=end, interval="1wk")
 
 

@@ -7,7 +7,6 @@ from analyse import compute_heikin_ashi, compute_ichimoku
 from get_data import extend_weekly_index, fetch_btc_weekly_data,fetch_btc_data
 
 
-
 def main():
     print("💬 Mr. TradeBotCoach Reminder: Before changing strategy logic, update logbook.txt and consult readchatgpt.txt.")
     data_weekly = fetch_btc_weekly_data()

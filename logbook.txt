@@ -251,3 +251,22 @@ Log metrics: win rate, profit factor, drawdown, average trade duration.
 
 Also: add a mode switch in `sell.py` to toggle between modes easily.
 ===========================
+
+
+template:
+==== ENTRY 2025-07-09 ====
+Decision:  I have a added a way to filter only large uptrend signals. but its not working.
+Its simply based on the donchian channel with 365 days look back. 
+
+I have also added a backup folder for the old sell.py and the old buy.py
+I also added some simple metrics to see average lenght of trades. 
+
+Reasoning: Because i need a better filter. I only want very few good trades.
+Then trade on multiple cryptoes/ stocks to chase huge moves
+Evidence:  theoretical intuition so far. 
+Assumptions: that i can find enough trades with these hard conditions
+Potential bias: i dont know
+Next step: well i need to get it to work. 
+I need to make some sort of resistance line that can be broken.
+It dosent have to be DC
+===========================

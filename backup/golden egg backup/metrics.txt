@@ -1,0 +1,57 @@
+🥚 My Golden Egg Strategy (Backup)
+jul 9: 
+BTC- USD
+
+start = "2015-01-01"
+end = "2025-07-08"
+
+This strategy is my current benchmark and most successful version to date. It delivers:
+
+    Total Return: 17,049 USD
+
+    Profit Factor: 11.01 — meaning it earns $11 for every $1 lost
+
+    Win Rate: 61.5%
+
+    Avg Win: 60.91% of entry
+
+    Avg Loss: only -4.21%
+
+    Max Drawdown: just 4.01%
+
+    Works on BTC, ETH, and LTC though LTC behaves okay but not as good. 
+
+It strikes a solid balance between high reward and low risk, with tight losses and the ability to catch massive trend moves.
+
+While not perfect — some early buys are small losers — the overall equity curve is strong, smooth, and survivable. This version will serve as my performance baseline while I explore stricter entries and better trailing logic.
+
+
+📊 PERFORMANCE METRICS
+Win Rate:              61.54%
+Avg Win:               1172.07 USD (60.91% of entry)
+Avg Loss:              -170.34 USD (-4.21% of entry)
+Avg Equity Win Impact: 7.29%
+Avg Equity Loss Impact:-0.85%
+Profit Factor:         11.01  how much you earn for every dollar you lose
+Total Return:          17049.67
+Max Drawdown USD:      683.97
+Max Drawdown %:        4.01%
+Max Win Streak:        9
+Max Loss Streak:       3
+Avg Daily Return:       12.14 USD/day
+
+📈 TRADE RETURN DISTRIBUTION
+📊 PERFORMANCE METRICS (win/loss per trade! not entire account!):
+-10% to -5%              | 3
+-5% to 0%                | 7
+0% to 5%                 | 3
+8.55%        | 1
+10.64%        | 1
+18.71%        | 1
+25% to 30%      | 2
+35% to 40%      | 2
+45% to 50%      | 2
+79.9%        | 1
+101.59%        | 1
+192.58%        | 1
+334.54%        | 1

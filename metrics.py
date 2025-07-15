@@ -61,6 +61,7 @@ def analyze_performance(trades):
     print(f"Max Loss Streak:       {streaks['max_loss']}")
     print(f"Avg Daily Return:       {avg_daily_return:.2f} USD/day")
 
+
 def print_return_distribution(trades, bucket_size=5):
     print("\n📈 TRADE RETURN DISTRIBUTION")
     print("📊 PERFORMANCE METRICS (win/loss per trade! not entire account!):")
@@ -79,19 +80,33 @@ def print_return_distribution(trades, bucket_size=5):
         label = f"{i}% to {i+bucket_size}%"
         buckets[label] = []
 
-    for pct in pct_returns:
+    for t in closed_trades:
+        pct = round(t.profit_pct(), 2)
+        duration = (t.exit_date - t.entry_date).days or 1
         bucket_key = f"{int(pct // bucket_size * bucket_size)}% to {int((pct // bucket_size + 1) * bucket_size)}%"
         if bucket_key in buckets:
-            buckets[bucket_key].append(pct)
+            buckets[bucket_key].append(duration)
 
-    for label, values in buckets.items():
-        if not values:
+    for label, durations in buckets.items():
+        if not durations:
             continue
-        unique_values = sorted(set(values))
-        if len(unique_values) == 1:
-            print(f"{unique_values[0]:>6}%".rjust(16) + f" | {len(values)}")
+        if len(durations) == 1:
+            print(f"{label:24} | 1 | {durations[0]} days")
         else:
-            print(f"{label:24} | {len(values)}")
+            avg_duration = sum(durations) / len(durations)
+            print(f"{label:24} | {len(durations)} | Avg duration: {avg_duration:.1f} days")
+
+    big_winners = [((t.exit_date - t.entry_date).days or 1) for t in closed_trades if t.profit_pct() > 10]
+    losers = [((t.exit_date - t.entry_date).days or 1) for t in closed_trades if t.profit_pct() <= 0]
+
+    if big_winners:
+        avg_big_winner_duration = sum(big_winners) / len(big_winners)
+        print(f"\n⏱️ Avg Duration of Winners >10%: {avg_big_winner_duration:.2f} days")
+
+    if losers:
+        avg_loser_duration = sum(losers) / len(losers)
+        print(f"⏱️ Avg Duration of Losing Trades: {avg_loser_duration:.2f} days")
+
 
 def get_equity_pct_change(trade):
     if trade.exit_price is not None and trade.entry_equity:
@@ -103,6 +118,7 @@ def print_trade_results(trades):
     for t in trades:
         if not t.is_open():
             equity_impact = get_equity_pct_change(t)
-            print(f"Trade from {t.entry_date.date()} to {t.exit_date.date()}: "
-                  f"{t.profit():.2f} USD ({t.profit_pct():.2f}%) | "
-                  f"Equity Impact: {equity_impact:.2f}%")
+            duration = (t.exit_date - t.entry_date).days or 1
+            print(f"Trade from {t.entry_date.date()} to {t.exit_date.date()} "
+                  f"({duration} days): {t.profit():.2f} USD "
+                  f"({t.profit_pct():.2f}%) | Equity Impact: {equity_impact:.2f}%")

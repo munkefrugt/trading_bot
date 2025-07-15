@@ -21,7 +21,8 @@ def plot_price_with_indicators(data,
         low=data['Low'],
         close=data['Close'],
         name='Daily',
-        visible='legendonly'
+        visible=True, 
+        #visible='legendonly'
     ), row=1, col=1)
 
     # === Daily EMA lines ===
@@ -38,6 +39,35 @@ def plot_price_with_indicators(data,
                 name=label,
                 line=dict(color=color, width=1)
             ), row=1, col=1)
+
+        # === Donchian Channel (52-week high/low) ===
+    if 'DC_Upper_365' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['DC_Upper_365'],
+            mode='lines',
+            name='DC Upper (52W)',
+            line=dict(color='darkgreen', width=1, dash='dot')
+        ), row=1, col=1)
+
+    if 'DC_Lower_365' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['DC_Lower_365'],
+            mode='lines',
+            name='DC Lower (52W)',
+            line=dict(color='darkred', width=1, dash='dot')
+        ), row=1, col=1)
+
+    if 'DC_Middle_365' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['DC_Middle_365'],
+            mode='lines',
+            name='DC Mid (52W)',
+            line=dict(color='gray', width=1, dash='dot')
+        ), row=1, col=1)
+
 
     # === Ichimoku Lines ===
     ichimoku_lines = {
@@ -74,6 +104,25 @@ def plot_price_with_indicators(data,
             line=dict(color='rgba(0,0,0,0)'),
             name='Ichimoku Cloud'
         ), row=1, col=1)
+
+    # === Weekly Ichimoku directly from data[] (reindexed) ===
+    ichimoku_weekly_lines = {
+        'W_Tenkan_sen': ('orange', 'W Tenkan-sen'),
+        'W_Kijun_sen': ('purple', 'W Kijun-sen'),
+        'W_Senkou_span_A': ('lightgreen', 'W Senkou A (in data)'),
+        'W_Senkou_span_B': ('lightcoral', 'W Senkou B (in data)'),
+        'W_Chikou_span': ('gray', 'W Chikou')
+    }
+
+    for col, (color, label) in ichimoku_weekly_lines.items():
+        if col in data.columns:
+            fig.add_trace(go.Scatter(
+                x=data.index,
+                y=data[col],
+                mode='lines',
+                name=label,
+                line=dict(color=color, width=3, dash='dot')
+            ), row=1, col=1)
 
     # === Buy/Sell Markers ===
     if buy_signals:

@@ -32,7 +32,7 @@ def compute_ichimoku(data):
 
     return ichimoku
 
-def extend_index(df, extra_periods=26):
+def extend_index(df, future_days=26):
     """
     Extend a DataFrame's index with future periods to hold forward-shifted indicators.
     """
@@ -45,7 +45,7 @@ def extend_index(df, extra_periods=26):
     if isinstance(freq, str) and not any(char.isdigit() for char in freq):
         freq = '1' + freq  # Add '1' in front if no number
     start = last_date + pd.to_timedelta(freq)    
-    new_dates = pd.date_range(start=start, periods=extra_periods, freq=freq)
+    new_dates = pd.date_range(start=start, periods=future_days, freq=freq)
     extension = pd.DataFrame(index=new_dates)
     return pd.concat([df_extended, extension])
 
@@ -64,3 +64,4 @@ def compute_heikin_ashi(data):
     ha['Low'] = pd.concat([data['Low'], ha['Open'], ha['Close']], axis=1).min(axis=1)
 
     return ha
+
