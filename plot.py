@@ -8,7 +8,8 @@ def plot_price_with_indicators(
     sell_signals=None,
     trades=None, 
     equity_curve=None, 
-    cash_series=None
+    cash_series=None,
+    weekly_data_HA=None
 ):
     fig = make_subplots(
         rows=3, cols=1,
@@ -28,6 +29,39 @@ def plot_price_with_indicators(
         name='Daily',
         visible=True
     ), row=1, col=1)
+    
+    # === Weekly HA  candlesticks ===
+    if all(col in data.columns for col in ['W_HA_Open', 'W_HA_High', 'W_HA_Low', 'W_HA_Close']):
+        fig.add_trace(go.Candlestick(
+            x=data.index,
+            open=data['W_HA_Open'],
+            high=data['W_HA_High'],
+            low=data['W_HA_Low'],
+            close=data['W_HA_Close'],
+            name='Weekly HA',
+            increasing_line_color='blue',
+            decreasing_line_color='yellow',
+            opacity=0.7,
+            visible=True
+        ), row=1, col=1)
+
+    # === Weekly HA candlesticks (from weekly_data_HA)  Makes a pretty plot===
+    if weekly_data_HA is not None:
+        fig.add_trace(go.Candlestick(
+            x=weekly_data_HA.index,
+            open=weekly_data_HA['W_HA_Open'],
+            high=weekly_data_HA['W_HA_High'],
+            low=weekly_data_HA['W_HA_Low'],
+            close=weekly_data_HA['W_HA_Close'],
+            name='Weekly HA pretty',
+            increasing_line_color='blue',
+            decreasing_line_color='yellow',
+            opacity=0.6,
+            visible=True
+        ), row=1, col=1)
+
+
+
 
     # === Daily EMA lines ===
     ema_config = [

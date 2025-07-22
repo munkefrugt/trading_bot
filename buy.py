@@ -1,13 +1,25 @@
 from trade import Trade
 
 def buy_check(open_trades, data, i, cash, buy_markers, equity, trades):
-    if i < 52 or i + 26 >= len(data):
-        return open_trades, cash, buy_markers, trades  # Prevent out-of-range errors
+
+    # Require historical and future context, but check only what’s actually needed
+    if i < 52:
+        return open_trades, cash, buy_markers, trades
+
+
+    # # Try accessing future values — only skip if truly unavailable
+    # try:
+    #     senkou_a_future = data['D_Senkou_span_A'].iloc[i + 26]
+
+    # except IndexError:
+    #     return open_trades, cash, buy_markers, trades
+
 
     current_date = data.index[i]
     close = data['D_Close'].iloc[i]
-    chikou = data['D_Chikou_span'].iloc[i]
+    chikou = data['D_Chikou_span'].iloc[i-26]
     close_26_back = data['D_Close'].iloc[i - 26]
+
 
     # === Indicators ===
     ema_50 = data['EMA_50'].iloc[i]
@@ -41,7 +53,7 @@ def buy_check(open_trades, data, i, cash, buy_markers, equity, trades):
     chikou_has_clear_sight = chikou > chikou_clearance_level
 
     # === Weekly Chikou Clearance ===
-    chikou_weekly = data['W_Chikou_span'].iloc[i]
+    chikou_weekly = data['W_Chikou_span'].iloc[i-(26*7)]
     weekly_chikou_index = i - 26
     if weekly_chikou_index < 26:
         return open_trades, cash, buy_markers, trades
@@ -71,6 +83,27 @@ def buy_check(open_trades, data, i, cash, buy_markers, equity, trades):
         cloud_future_is_upgoing and
         senkou_b_rising
     )
+        # === Debug specific date ===
+    if data.index[i].strftime("%Y-%m-%d") == "2024-11-06":
+        print("👀 buy_check reached 2024-11-06")
+
+    if current_date.strftime("%Y-%m-%d") == "2024-11-06":
+        print(f"\n📍 {current_date.date()} — Chikou Debug")
+        print(f"Chikou (daily):  {chikou}")
+        print(f"Chikou (weekly): {chikou_weekly}")
+        
+    if current_date.strftime("%Y-%m-%d") == "2024-11-06":
+        print(f"\n🔍 Debugging BUY check for {current_date}:")
+        print(f"crossed_dc_upper:         {crossed_dc_upper}")
+        print(f"ema_close_together:       {ema_close_together}")
+        print(f"not open_trades:          {not open_trades}")
+        print(f"chikou_has_clear_sight:   {chikou_has_clear_sight}")
+        print(f"weekly_chikou_clear_sight:{weekly_chikou_has_clear_sight}")
+        print(f"cloud_future_is_green:    {cloud_future_is_green}")
+        print(f"cloud_future_is_upgoing:  {cloud_future_is_upgoing}")
+        print(f"senkou_b_rising:          {senkou_b_rising}")
+        print(f"risk_per_unit:            {close - ema_200:.2f}")
+        print(f"cash >= cost?:            {cash >= (0.02 * equity / (close - ema_200)) if (close - ema_200) > 0 else 'n/a'}")
 
     if buy_signal:
         stoploss_price = ema_200

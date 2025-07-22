@@ -26,8 +26,6 @@ def get_data_with_indicators_and_time_alignment():
     future_days = 26 * 7
     data = extend_index(data, future_days=future_days)
 
-    print("Daily columns:", list(data.columns))
-    print("Weekly columns:", list(weekly_raw.columns))
 
     # --- Heikin-Ashi (weekly) ---
     ha_weekly = compute_heikin_ashi(weekly_raw, weekly=True)
@@ -57,7 +55,5 @@ def get_data_with_indicators_and_time_alignment():
     # --- Daily Ichimoku ---
     ichimoku_daily = compute_ichimoku(data)
     data = pd.concat([data, ichimoku_daily], axis=1)
-
-    print("Final columns:", list(data.columns))
 
     return data

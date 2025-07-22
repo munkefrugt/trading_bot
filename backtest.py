@@ -25,6 +25,10 @@ def run_backtest():
         close = data['D_Close'].iloc[i]
         if pd.isna(close):
             print(f"⛔ End of valid data at {data.index[i].date()}")
+            print()
+            #print("\n🔍 Final row seen by backtest loop:")
+            #print(data.iloc[i-1].to_string())
+            #print(f"\n🕒 Date: {data.index[i-1]}")
             break
 
         # === Equity snapshot before trades ===
@@ -52,6 +56,7 @@ def run_backtest():
             cash=cash,
             sell_markers=sell_markers
         )
+
 
     equity_df = pd.Series(equity_series, index=equity_index, name="Equity")
     cash_df = pd.Series(cash_series, index=equity_index, name="Cash")

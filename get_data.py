@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 
 start = "2015-01-01"
-end = "2025-07-13"
+end = "2024-11-09"
 
 def fetch_btc_data(start=start, end=end, interval="1d"):
     data = yf.download("BTC-USD", start=start, end=end, interval=interval, auto_adjust=False)

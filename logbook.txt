@@ -270,3 +270,17 @@ Next step: well i need to get it to work.
 I need to make some sort of resistance line that can be broken.
 It dosent have to be DC
 ===========================
+
+template:
+==== ENTRY 2025-07-15 ====
+Decision:  I have made the df of weekly more accesible. and more structured. 
+Added some buy ichimoku signals clear "chikou signals"
+
+Reasoning: Because i need a better filter. I only want very few good trades.
+Then trade on multiple cryptoes/ stocks to chase huge moves
+Evidence:  so far its good. few loosers high winrate. 
+Assumptions: that i can find enough trades with these hard conditions with multiple coins/stocks
+Potential bias: might be overfitting. try more coins
+Next step: 
+BB? it should add a good filter
+===========================
