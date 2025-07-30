@@ -284,3 +284,32 @@ Potential bias: might be overfitting. try more coins
 Next step: 
 BB? it should add a good filter
 ===========================
+
+==== ENTRY 2025-07-23 ====
+Decision:
+Limiting Prophet’s training window to a 2-year lookback. Avoiding longer lookbacks, as they distort the short-term trend by introducing older market cycles and volatility patterns.
+
+Reasoning:
+Prophet tries to detect changepoints and fit trend components across the entire history it's trained on. Feeding it too much long-term BTC history causes it to “remember” earlier bull/bear market structures, which overrides or distorts the current trend channel. A 2-year window balances enough recent data for smoothing, while keeping the model focused on the current price regime.
+
+Evidence:
+Manual tests show:
+- A 2-year lookback produces clean, visually reliable trend lines that match well with how traders perceive "fair value" or trend direction.
+- Using 5+ years introduces wide arcs and noisy dips or overconfident long-term projections that don’t match local conditions.
+- Prophet forecast becomes erratic and less aligned with the real short-term structure when trained on the full BTC history.
+
+Assumptions:
+- The most recent 2 years contain all meaningful dynamics for near-term forecasts.
+- Market behavior (volatility, momentum structure) has changed enough since early BTC years that those older cycles are no longer relevant.
+
+Potential bias:
+- Might be discarding valuable long-term structure that could help in large cycle timing.
+- May need to revisit this choice if strategy switches to a multi-month or position-trading horizon.
+- Short-term smoothness can be deceptive: curve may look clean but still fail to predict actual price turns.
+
+Next step:
+- Standardize Prophet’s training set to the last 730 days (`df = data[data['ds'] > today - pd.Timedelta(days=730)]`)
+- Log or annotate Prophet lookback window for each run
+- Optional: try adding `changepoint_range=0.9` and/or tuning `changepoint_prior_scale` for better short-term fit
+- Optional: explore adding Prophet's upper/lower bounds as synthetic "trend channel" for overbought/oversold signals
+===========================
