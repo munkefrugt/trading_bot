@@ -47,9 +47,10 @@ def find_confirmed_extrema(y, order=3):
 channels = []
 breakouts = []
 
-# Step 6: Compute channel per segment with extrema check
-def compute_confirmed_channel(seg_df):
-    if len(seg_df) < 20:
+# Step 6: Compute channel per segment with extension and extrema check
+def compute_confirmed_channel(seg_df, min_days=30):
+    duration_days = (seg_df['ds'].iloc[-1] - seg_df['ds'].iloc[0]).days
+    if duration_days < min_days or len(seg_df) < 20:
         return None
 
     maxima, minima = find_confirmed_extrema(seg_df['y'])
@@ -80,11 +81,12 @@ def compute_confirmed_channel(seg_df):
     else:
         bottom_outer = bottom_inner = np.full_like(base, np.nan)
 
-    # Detect breakouts (if price is beyond any defined outer band)
+    # Detect breakouts
     for i, row in seg_df.iterrows():
-        if not np.isnan(top_outer[i - seg_df.index[0]]) and row.y > top_outer[i - seg_df.index[0]]:
+        idx_rel = i - seg_df.index[0]
+        if not np.isnan(top_outer[idx_rel]) and row.y > top_outer[idx_rel]:
             breakouts.append({'ds': row.ds, 'y': row.y, 'type': 'breakout_up'})
-        if not np.isnan(bottom_outer[i - seg_df.index[0]]) and row.y < bottom_outer[i - seg_df.index[0]]:
+        if not np.isnan(bottom_outer[idx_rel]) and row.y < bottom_outer[idx_rel]:
             breakouts.append({'ds': row.ds, 'y': row.y, 'type': 'breakout_down'})
 
     start = seg_df['ds'].iloc[0].strftime('%b')
@@ -100,12 +102,42 @@ def compute_confirmed_channel(seg_df):
         'label': label
     }
 
+# Compute raw channels
 for _, seg in btc.groupby('segment'):
     result = compute_confirmed_channel(seg)
     if result:
         channels.append(result)
 
-# Step 7: Plot with Plotly
+# Step 7: Extend channels in time (+/- 14 days)
+extension_days = 14
+extended_channels = []
+
+for i, ch in enumerate(channels):
+    start_date = ch['x'].iloc[0] - pd.Timedelta(days=extension_days)
+    end_date = ch['x'].iloc[-1] + pd.Timedelta(days=extension_days)
+
+    # Clip within BTC data range
+    start_date = max(start_date, btc['ds'].iloc[0])
+    end_date = min(end_date, btc['ds'].iloc[-1])
+
+    ext_df = btc[(btc['ds'] >= start_date) & (btc['ds'] <= end_date)].copy()
+
+    # Interpolate prices to extended range
+    def interp(values):
+        return np.interp(ext_df.index, ch['x'].index, values, left=values[0], right=values[-1])
+
+    extended_channels.append({
+        'x': ext_df['ds'],
+        'top_inner': interp(ch['top_inner']),
+        'bottom_inner': interp(ch['bottom_inner']),
+        'top_outer': interp(ch['top_outer']),
+        'bottom_outer': interp(ch['bottom_outer']),
+        'label': ch['label']
+    })
+
+channels = extended_channels
+
+# Step 8: Plot with Plotly
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=btc['ds'], y=btc['y'], mode='lines', name='BTC Close', line=dict(color='royalblue')))
 fig.add_trace(go.Scatter(x=btc['ds'], y=btc['trend'], mode='lines', name='Prophet Forecast', line=dict(dash='dash', color='orange')))
@@ -125,7 +157,7 @@ if breakouts:
     fig.add_trace(go.Scatter(x=down['ds'], y=down['y'], mode='markers', name='Breakout ↓', marker=dict(color='red', size=10, symbol='triangle-down')))
 
 fig.update_layout(
-    title="BTC-USD with Validated Trend Channels and Logical Breakout Detection",
+    title="BTC-USD with Extended Trend Channels and Logical Breakout Detection",
     xaxis_title="Date",
     yaxis_title="Price (USD)",
     legend=dict(font=dict(size=9)),

@@ -7,7 +7,7 @@ from scipy.signal import argrelextrema
 import plotly.graph_objects as go
 
 # Step 1: Download BTC-USD data
-btc = yf.download("BTC-USD", start="2021-10-25", end="2023-10-25", interval="1d").reset_index()
+btc = yf.download("BTC-USD", start="2022-08-01", end="2024-08-01", interval="1d").reset_index()
 btc = btc[['Date', 'Close']].dropna()
 btc.columns = ['ds', 'y']
 
@@ -48,8 +48,10 @@ channels = []
 breakouts = []
 
 # Step 6: Compute channel per segment with extrema check
-def compute_confirmed_channel(seg_df):
-    if len(seg_df) < 20:
+def compute_confirmed_channel(seg_df, min_days=30):
+    # Check if segment covers enough time (min_days)
+    duration_days = (seg_df['ds'].iloc[-1] - seg_df['ds'].iloc[0]).days
+    if duration_days < min_days or len(seg_df) < 20:
         return None
 
     maxima, minima = find_confirmed_extrema(seg_df['y'])
@@ -80,7 +82,7 @@ def compute_confirmed_channel(seg_df):
     else:
         bottom_outer = bottom_inner = np.full_like(base, np.nan)
 
-    # Detect breakouts (if price is beyond any defined outer band)
+    # Detect breakouts
     for i, row in seg_df.iterrows():
         if not np.isnan(top_outer[i - seg_df.index[0]]) and row.y > top_outer[i - seg_df.index[0]]:
             breakouts.append({'ds': row.ds, 'y': row.y, 'type': 'breakout_up'})

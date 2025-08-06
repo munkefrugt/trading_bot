@@ -1,3 +1,4 @@
+#calc_indicators.py
 import pandas as pd
 
 
@@ -84,6 +85,30 @@ def compute_heikin_ashi(data, prefix="D_", weekly=False):
     ], axis=1).min(axis=1)
 
     return ha
+
+def compute_bollinger_bands(data, period=20, std_dev=2, prefix="D_"):
+    """
+    Compute Bollinger Bands (Upper, Middle, Lower).
+    
+    Parameters:
+    - data: DataFrame containing price columns
+    - period: Moving average window (default 20)
+    - std_dev: Number of standard deviations for bands (default 2)
+    - prefix: e.g. "D_" or "W_"
+    
+    Returns:
+    - DataFrame with BB Upper, Middle (MA), and Lower
+    """
+    bb = pd.DataFrame(index=data.index)
+    ma = data[f'{prefix}Close'].rolling(window=period).mean()
+    std = data[f'{prefix}Close'].rolling(window=period).std()
+
+    bb[f'{prefix}BB_Middle_{period}'] = ma
+    bb[f'{prefix}BB_Upper_{period}'] = ma + (std_dev * std)
+    bb[f'{prefix}BB_Lower_{period}'] = ma - (std_dev * std)
+    bb[f'{prefix}BB_Width_{period}'] = bb[f'{prefix}BB_Upper_{period}'] - bb[f'{prefix}BB_Lower_{period}']
+
+    return bb
 
 
 

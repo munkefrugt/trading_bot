@@ -1,5 +1,8 @@
-from calc_indicators import compute_heikin_ashi, compute_ichimoku, compute_ema, extend_index
+#align_data_time.py
+
+from calc_indicators import compute_heikin_ashi, compute_ichimoku, compute_ema, extend_index, compute_bollinger_bands
 from get_data import extend_weekly_index, fetch_btc_weekly_data, fetch_btc_data
+from get_all_trendlines_indicator import get_all_trendlines
 import pandas as pd
 import numpy as np
 
@@ -17,6 +20,13 @@ def get_data_with_indicators_and_time_alignment():
     data['EMA_50'] = compute_ema(data, 50)
     data['EMA_200'] = compute_ema(data, 200)
 
+    # Add Bollinger Bands (Daily)
+    bb_daily = compute_bollinger_bands(data, period=20, std_dev=2, prefix="D_")
+    data['D_BB_Middle_20'] = bb_daily['D_BB_Middle_20']
+    data['D_BB_Upper_20'] = bb_daily['D_BB_Upper_20']
+    data['D_BB_Lower_20'] = bb_daily['D_BB_Lower_20']
+    data['D_BB_Width_20'] = bb_daily['D_BB_Width_20'] 
+    
     period = 365
     data['DC_Upper_365'] = data['D_High'].rolling(window=period).max()
     data['DC_Lower_365'] = data['D_Low'].rolling(window=period).min()
@@ -55,5 +65,7 @@ def get_data_with_indicators_and_time_alignment():
     # --- Daily Ichimoku ---
     ichimoku_daily = compute_ichimoku(data)
     data = pd.concat([data, ichimoku_daily], axis=1)
+
+    #data = get_all_trendlines(data, price_col="D_Close", debug=False)
 
     return data

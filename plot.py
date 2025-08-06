@@ -1,7 +1,6 @@
+from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
-from plotly.subplots import make_subplots
-
 def plot_price_with_indicators(
     data,
     buy_signals=None, 
@@ -12,9 +11,9 @@ def plot_price_with_indicators(
     weekly_data_HA=None
 ):
     fig = make_subplots(
-        rows=3, cols=1,
+        rows=3, cols=1,  # Added an extra subplot row
         shared_xaxes=True,
-        row_heights=[0.6, 0.25, 0.15],
+        row_heights=[0.7, 0.2, 0.15],  # Adjusted heights: Price, Slope, Equity, Cash
         vertical_spacing=0.03,
         subplot_titles=("Price with Indicators", "Equity Curve", "Cash")
     )
@@ -30,7 +29,7 @@ def plot_price_with_indicators(
         visible=True
     ), row=1, col=1)
     
-    # === Weekly HA  candlesticks ===
+    # === Weekly HA candlesticks ===
     if all(col in data.columns for col in ['W_HA_Open', 'W_HA_High', 'W_HA_Low', 'W_HA_Close']):
         fig.add_trace(go.Candlestick(
             x=data.index,
@@ -42,10 +41,10 @@ def plot_price_with_indicators(
             increasing_line_color='blue',
             decreasing_line_color='yellow',
             opacity=0.7,
-            visible=True
+            visible='legendonly'
         ), row=1, col=1)
 
-    # === Weekly HA candlesticks (from weekly_data_HA)  Makes a pretty plot===
+    # === Weekly HA candlesticks (pretty) ===
     if weekly_data_HA is not None:
         fig.add_trace(go.Candlestick(
             x=weekly_data_HA.index,
@@ -57,11 +56,8 @@ def plot_price_with_indicators(
             increasing_line_color='blue',
             decreasing_line_color='yellow',
             opacity=0.6,
-            visible=True
-        ), row=1, col=1)
-
-
-
+            visible='legendonly'
+            ), row=1, col=1)
 
     # === Daily EMA lines ===
     ema_config = [
@@ -75,7 +71,8 @@ def plot_price_with_indicators(
                 y=data[col],
                 mode='lines',
                 name=label,
-                line=dict(color=color, width=1)
+                line=dict(color=color, width=1),
+                visible='legendonly'
             ), row=1, col=1)
 
     # === Donchian Channel ===
@@ -85,7 +82,8 @@ def plot_price_with_indicators(
             y=data['DC_Upper_365'],
             mode='lines',
             name='DC Upper (52W)',
-            line=dict(color='darkgreen', width=1, dash='dot')
+            line=dict(color='darkgreen', width=1, dash='dot'),
+            visible='legendonly'
         ), row=1, col=1)
 
     if 'DC_Lower_365' in data.columns:
@@ -94,7 +92,8 @@ def plot_price_with_indicators(
             y=data['DC_Lower_365'],
             mode='lines',
             name='DC Lower (52W)',
-            line=dict(color='darkred', width=1, dash='dot')
+            line=dict(color='darkred', width=1, dash='dot'),
+            visible='legendonly'
         ), row=1, col=1)
 
     if 'DC_Middle_365' in data.columns:
@@ -103,7 +102,8 @@ def plot_price_with_indicators(
             y=data['DC_Middle_365'],
             mode='lines',
             name='DC Mid (52W)',
-            line=dict(color='gray', width=1, dash='dot')
+            line=dict(color='gray', width=1, dash='dot'),
+            visible='legendonly'
         ), row=1, col=1)
 
     # === Daily Ichimoku Lines ===
@@ -114,7 +114,6 @@ def plot_price_with_indicators(
         'D_Senkou_span_B': ('red', 'Senkou B'),
         'D_Chikou_span': ('gray', 'Chikou')
     }
-
     for col, (color, label) in ichimoku_lines.items():
         if col in data.columns:
             fig.add_trace(go.Scatter(
@@ -122,8 +121,9 @@ def plot_price_with_indicators(
                 y=data[col],
                 mode='lines',
                 name=label,
-                line=dict(color=color, width=1)
-            ), row=1, col=1)
+                line=dict(color=color, width=1),
+                visible='legendonly'
+                ), row=1, col=1)
 
     # === Ichimoku Cloud fill (Daily) ===
     if 'D_Senkou_span_A' in data.columns and 'D_Senkou_span_B' in data.columns:
@@ -139,7 +139,8 @@ def plot_price_with_indicators(
             fill='tonexty',
             fillcolor='rgba(200,200,200,0.3)',
             line=dict(color='rgba(0,0,0,0)'),
-            name='Ichimoku Cloud'
+            name='Ichimoku Cloud',
+            visible='legendonly'
         ), row=1, col=1)
 
     # === Weekly Ichimoku (dot lines) ===
@@ -150,7 +151,6 @@ def plot_price_with_indicators(
         'W_Senkou_span_B': ('lightcoral', 'W Senkou B'),
         'W_Chikou_span': ('gray', 'W Chikou')
     }
-
     for col, (color, label) in ichimoku_weekly_lines.items():
         if col in data.columns:
             fig.add_trace(go.Scatter(
@@ -160,6 +160,78 @@ def plot_price_with_indicators(
                 name=label,
                 line=dict(color=color, width=3, dash='dot')
             ), row=1, col=1)
+    
+    # === W_SenB_Future_flat_to_up_point ===
+    if 'W_SenB_Future_flat_to_up_point' in data.columns:
+        future_senb_points = data[data['W_SenB_Future_flat_to_up_point']]
+        fig.add_trace(go.Scatter(
+            x=future_senb_points.index,
+            y=future_senb_points['W_Senkou_span_B'],  # mark at SenB future value
+            mode='markers',
+            name='SenB Future falt -> Rising',
+            marker=dict(color='cyan', size=14, symbol='star')
+        ), row=1, col=1)
+
+
+    
+        # === SenB Trend Dead (Future Black Star) ===
+    if 'W_SenB_Trend_Dead' in data.columns:
+        dead_points = data[data['W_SenB_Trend_Dead']]
+        if not dead_points.empty:
+            fig.add_trace(go.Scatter(
+                x=dead_points.index,
+                y=dead_points['W_Senkou_span_B'],  # Plot at SenB future level
+                mode='markers',
+                name='SenB Trend Dead',
+                marker=dict(color='black', size=16, symbol='square')
+            ), row=1, col=1)
+
+        # === Real Uptrend Start Marker ===
+    if 'Real_uptrend_start' in data.columns:
+        start_points = data[data['Real_uptrend_start']]
+        if not start_points.empty:
+            fig.add_trace(go.Scatter(
+                x=start_points.index,
+                y=start_points['D_Close'],  # Plot on close price
+                mode='markers',
+                name='Uptrend Start',
+                marker=dict(color='lime', size=14, symbol='star')
+            ), row=1, col=1)
+
+    # === Real Uptrend End Marker ===
+    if 'Real_uptrend_end' in data.columns:
+        end_points = data[data['Real_uptrend_end']]
+        if not end_points.empty:
+            fig.add_trace(go.Scatter(
+                x=end_points.index,
+                y=end_points['D_Close'],  # Plot on close price
+                mode='markers',
+                name='Uptrend End',
+                marker=dict(color='purple', size=14, symbol='square')
+            ), row=1, col=1)
+
+
+
+    # === Trend Channel Lines ===
+    if 'Channel_Top' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['Channel_Top'],
+            mode='lines',
+            name='Trend Channel Top',
+            line=dict(color='green', width=2, dash='dash'),
+            connectgaps=False
+        ), row=1, col=1)
+
+    if 'Channel_Bottom' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['Channel_Bottom'],
+            mode='lines',
+            name='Trend Channel Bottom',
+            line=dict(color='red', width=2, dash='dash'),
+            connectgaps=False
+        ), row=1, col=1)
 
     # === Buy Markers ===
     if buy_signals:
@@ -172,46 +244,6 @@ def plot_price_with_indicators(
             marker=dict(color='green', size=20, symbol='triangle-up')
         ), row=1, col=1)
 
-        # Future Senkou A at time of buy
-        if 'D_Senkou_span_A' in data.columns:
-            projected_dates = []
-            projected_values = []
-            for date, _ in buy_signals:
-                if date in data.index:
-                    idx = data.index.get_loc(date)
-                    future_idx = idx + 26
-                    if future_idx < len(data):
-                        projected_dates.append(data.index[future_idx])
-                        projected_values.append(data['D_Senkou_span_A'].iloc[future_idx])
-
-            fig.add_trace(go.Scatter(
-                x=projected_dates,
-                y=projected_values,
-                mode='markers',
-                name='Future Senkou A @ Buy',
-                marker=dict(color='black', size=10, symbol='star')
-            ), row=1, col=1)
-
-        # Chikou span marker at buy
-        if 'D_Chikou_span' in data.columns:
-            chikou_dates = []
-            chikou_values = []
-            for date, _ in buy_signals:
-                if date in data.index:
-                    idx = data.index.get_loc(date)
-                    chikou_idx = idx - 26
-                    if chikou_idx >= 0:
-                        chikou_dates.append(data.index[chikou_idx])
-                        chikou_values.append(data['D_Close'].iloc[idx])
-
-            fig.add_trace(go.Scatter(
-                x=chikou_dates,
-                y=chikou_values,
-                mode='markers',
-                name='Chikou Span @ Buy',
-                marker=dict(color='purple', size=10, symbol='square')
-            ), row=1, col=1)
-
     # === Sell Markers ===
     if sell_signals:
         sell_x, sell_y = zip(*sell_signals)
@@ -222,6 +254,36 @@ def plot_price_with_indicators(
             name='Sell Signal',
             marker=dict(color='red', size=20, symbol='triangle-down')
         ), row=1, col=1)
+
+    # === Bollinger Bands (20) ===
+    if all(col in data.columns for col in ['D_BB_Middle_20', 'D_BB_Upper_20', 'D_BB_Lower_20']):
+        # Middle Line
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['D_BB_Middle_20'],
+            mode='lines',
+            name='BB Middle (20)',
+            line=dict(color='gray', width=2, dash='dot')
+        ), row=1, col=1)
+
+        # Upper Band
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['D_BB_Upper_20'],
+            mode='lines',
+            name='BB Upper (20)',
+            line=dict(color='blue', width=2)
+        ), row=1, col=1)
+
+        # Lower Band
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['D_BB_Lower_20'],
+            mode='lines',
+            name='BB Lower (20)',
+            line=dict(color='blue', width=2)
+        ), row=1, col=1)
+
 
     # === Equity subplot ===
     if equity_curve is not None:
@@ -241,13 +303,16 @@ def plot_price_with_indicators(
             line=dict(color='orange')
         ), row=3, col=1)
 
-    # === Final Layout ===
+    
+
+    # === Layout ===
     fig.update_layout(
-        hovermode='x unified',
+        hovermode='x unified',  # Single hover line shared across subplots
         xaxis=dict(rangeslider=dict(visible=False)),
-        xaxis3=dict(title="Date"),
-        yaxis2=dict(title="Equity (USD)"),
-        yaxis3=dict(title="Cash (USD)")
+        xaxis2=dict(matches='x'),  # Match x-axis of subplot 2 to the first
+        xaxis3=dict(matches='x'),  # Match x-axis of subplot 3
+        xaxis4=dict(matches='x')   # Match x-axis of subplot 4
     )
+
 
     fig.show()
