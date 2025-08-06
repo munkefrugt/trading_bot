@@ -3,8 +3,8 @@ def trend_check(data, i):
 
     current_date = data.index[i]
 
-    flat_threshold = 0.02
-    breakout_pct = 0.01
+    W_flat_threshold = 0.04
+    W_breakout_pct = 0.01
     W_sen_a_buffer = 0.01  # Require W_SenA to be at least 1% above W_SenB
 
     prev_uptrend = data['Uptrend'].iloc[i-1] if i > 0 else False
@@ -42,18 +42,17 @@ def trend_check(data, i):
             )
 
             if (
-                W_senb_flat_range < flat_threshold
-                and W_senb_future_now > W_flat_base_avg * (1 + breakout_pct)
+                W_senb_flat_range < W_flat_threshold
+                and W_senb_future_now > W_flat_base_avg * (1 + W_breakout_pct)
                 and W_sen_a_confirm
-                and D_price_above_or_inside_cloud  # ✅ Added condition
+                and D_price_above_or_inside_cloud
             ):
                 future_index = i + (26 * 7)
                 data.at[data.index[future_index], 'W_SenB_Future_flat_to_up_point'] = True  # Cyan star
-                data.at[data.index[i], 'Real_uptrend_start'] = True  # Actual start marker
+                data.at[data.index[i], 'Real_uptrend_start'] = True
                 data.at[current_date, 'Uptrend'] = True
                 data.at[current_date, 'Trend_Buy_Zone'] = True
                 print(f"📈 Entering Buy Zone: {current_date} (W_SenA confirmed & price in/above D cloud)")
-
             else:
                 data.at[current_date, 'Uptrend'] = prev_uptrend
 
@@ -71,11 +70,10 @@ def trend_check(data, i):
                 ) < 0.005
 
                 # EMA 50 slope over same 4-week window
-                EMA_decline_pct = 0.01  # or tweak to 0.02
+                EMA_decline_pct = 0.01
                 EMA50_4w_ago = data['EMA_50'].iloc[i - lookback]
                 EMA50_now = data['EMA_50'].iloc[i]
-                EMA50_decline = EMA50_now < EMA50_4w_ago * (1 - EMA_decline_pct)
-                
+                EMA50_decline = EMA50_4w_ago > EMA50_now
                 # D price under D cloud for 2 consecutive days
                 D_price_under_cloud = (
                     data['D_Close'].iloc[i-1] < data['D_Senkou_span_A'].iloc[i-1]
@@ -85,14 +83,26 @@ def trend_check(data, i):
                 )
 
                 # Confirm trend end if W_SenB flat/down + EMA50 decline OR D price under D cloud 2 days
-                if ((W_future_downward or W_future_flat_4w) and EMA50_decline) or D_price_under_cloud:
+                if ((W_future_downward or W_future_flat_4w) 
+                    and EMA50_decline
+                    and D_price_under_cloud):
+                    # 🔍 Only print lookback info if we actually exit the uptrend
+                    EMA50_4w_ago_date = data.index[i - lookback]
+                    EMA50_now_date = data.index[i]
+                    # print(f"📉 Entering Dead Zone: {current_date}")
+                    # print(f"   🔍 EMA50 Lookback: {EMA50_4w_ago_date} → {EMA50_now_date}")
+                    # print(f"       Values: {EMA50_4w_ago:.2f} → {EMA50_now:.2f}")
+                    # print(f"   • W_Future_downward: {W_future_downward}")
+                    # print(f"   • W_Future_flat_4w: {W_future_flat_4w}")
+                    # print(f"   • EMA50_decline: {EMA50_decline}")
+                    # print(f"   • D_Price_under_cloud: {D_price_under_cloud}")
+
                     future_index = i + (26 * 7)
-                    data.at[data.index[future_index], 'W_SenB_Trend_Dead'] = True  # Black star
-                    data.at[data.index[i], 'Real_uptrend_end'] = True  # Actual end marker
+                    data.at[data.index[future_index], 'W_SenB_Trend_Dead'] = True
+                    data.at[data.index[i], 'Real_uptrend_end'] = True
 
                     data.at[current_date, 'Uptrend'] = False
                     data.at[current_date, 'Trend_Buy_Zone'] = False
-                    print(f"📉 Entering Dead Zone: {current_date}")
                 else:
                     data.at[current_date, 'Uptrend'] = prev_uptrend
 
