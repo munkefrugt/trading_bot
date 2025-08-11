@@ -1,5 +1,3 @@
-
-from calc_indicators import compute_ema, extend_index
 from backtest import run_backtest
 from plot import plot_price_with_indicators
 from metrics import analyze_performance, print_return_distribution,print_trade_results
@@ -12,8 +10,8 @@ def main():
 
     weekly_data = fetch_btc_weekly_data()
     weekly_data = weekly_data.add_prefix("W_")
-    print(weekly_data.head(1))
-
+    print(weekly_data.head(1))  
+    
     
     data, buys, sells, trades, equity , cash= run_backtest()
     print(f"{len(buys)} buy signals, {len(sells)} sell signals")

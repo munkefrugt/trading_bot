@@ -7,6 +7,7 @@ from trendcheck import trend_check
 from sell import sell_check
 from buy import buy_check 
 import pandas as pd
+import numpy as np
 
 
 def run_backtest():
@@ -16,11 +17,13 @@ def run_backtest():
     required_cols = [
         'Uptrend', 'Trend_Buy_Zone', 
         'W_SenB_Future_flat_to_up_point', 'W_SenB_Trend_Dead',
-        'Real_uptrend_start', 'Real_uptrend_end'
+        'Real_uptrend_start', 'Real_uptrend_end', 'Searching_micro_trendline',
+        'Searching_macro_trendline', 'Start_of_Dead_Trendline'
     ]
     for col in required_cols:
         if col not in data.columns:
             data[col] = False
+
 
     trades, buy_markers, sell_markers, open_trades = [], [], [], []
     cash_series, equity_series, equity_index = [], [], []

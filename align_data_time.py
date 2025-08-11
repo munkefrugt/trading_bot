@@ -2,7 +2,6 @@
 
 from calc_indicators import compute_heikin_ashi, compute_ichimoku, compute_ema, extend_index, compute_bollinger_bands
 from get_data import extend_weekly_index, fetch_btc_weekly_data, fetch_btc_data
-from get_all_trendlines_indicator import get_all_trendlines
 import pandas as pd
 import numpy as np
 
@@ -66,6 +65,5 @@ def get_data_with_indicators_and_time_alignment():
     ichimoku_daily = compute_ichimoku(data)
     data = pd.concat([data, ichimoku_daily], axis=1)
 
-    #data = get_all_trendlines(data, price_col="D_Close", debug=False)
 
     return data

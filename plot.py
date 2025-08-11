@@ -209,6 +209,64 @@ def plot_price_with_indicators(
                 name='Uptrend End',
                 marker=dict(color='purple', size=14, symbol='square')
             ), row=1, col=1)
+    
+    # === Start of Dead Trendline Marker ===
+    if 'Start_of_Dead_Trendline' in data.columns:
+        dead_trendline_starts = data[data['Start_of_Dead_Trendline'] == True]
+        if not dead_trendline_starts.empty:
+            fig.add_trace(go.Scatter(
+                x=dead_trendline_starts.index,
+                y=dead_trendline_starts['D_Close'],
+                mode='markers',
+                name='Start of Dead Trendline',
+                marker=dict(color='red', size=10, symbol='x')
+            ), row=1, col=1)
+
+    # === Fitted Macro Trendline  from Start_of_Dead_Trendline to senb coresponding dead point===
+    # if 'Fitted_Macro_Trendline' in data.columns:
+    #     fitted = data['Fitted_Macro_Trendline'].dropna()
+    #     if not fitted.empty:
+    #         fig.add_trace(go.Scatter(
+    #             x=fitted.index,
+    #             y=fitted,
+    #             mode='lines',
+    #             name='Fitted Macro Trendline',
+    #             line=dict(color='red', width=2, dash='dot')
+    #         ), row=1, col=1)
+
+    # === Plot Trendline_from_top (X) if it exists ===
+    if 'Trendline_from_X' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['Trendline_from_X'],
+            mode='lines',
+            name='Trendline from X',
+            line=dict(color='orange', dash='dot'),
+            connectgaps=False  # <- VERY important!
+        ), row=1, col=1)
+
+    # === Plot Trendline_from_top (X) if it exists ===
+    if 'Macro_trendline_from_X' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['Macro_trendline_from_X'],
+            mode='lines',
+            name='Macro_trendline_from_X',
+            line=dict(color='red', dash='dot'),
+            connectgaps=False  # <- VERY important!
+        ), row=1, col=1)
+
+    # # === Macro Trendlines from W_SenB ===
+    # for col in data.columns:
+    #     if col.startswith("Macro_Trend_"):
+    #         fig.add_trace(go.Scatter(
+    #             x=data.index,
+    #             y=data[col],
+    #             mode='lines',
+    #             name=col.replace("Macro_Trend_", "Macro Trend "),
+    #             line=dict(color='darkorange', width=2, dash='dashdot'),
+    #             connectgaps=False
+    #         ), row=1, col=1)
 
 
 

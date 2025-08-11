@@ -1,5 +1,5 @@
-from build_trend_line import get_trend_line, find_trend_start_point
-from macro_trendline import build_macro_trendline_from_last_X
+from macro_trend_line_from_W_senb_or_more import find_trend_start_point
+from build_trend_line import get_trend_line
 def trend_check(data, i):
     """Check W_SenB trend conditions and update uptrend states in `data`."""
 
@@ -24,85 +24,45 @@ def trend_check(data, i):
             data['D_Close'].iloc[i] >= data['D_Senkou_span_A'].iloc[i]
         )
     )
-    #=== search for micro trendline ===
+    # === search for micro trendline ===
     if data.at[prev_date, 'Searching_micro_trendline']:
         data,mirco_trendline_end = get_trend_line(data, current_index=i)
         if mirco_trendline_end:
             data.at[current_date, 'Searching_micro_trendline'] = False
-            #print(f"🔍 Micro trendline found at {current_date}")
+            print(f"🔍 Micro trendline found at {current_date}")
             return data
         
         elif price_above_or_inside_cloud: 
             data.at[current_date, 'Searching_micro_trendline'] = False
-            #print(f"🔍 Micro trendline search ended at {current_date} due to price in D_cloud.")
-            data.at[current_date, 'Searching_macro_trendline'] = True
-
+            print(f"🔍 Micro trendline search ended at {current_date} due to price in D_cloud.")
             return data
         
         else:
             data.at[current_date, 'Searching_micro_trendline'] = True
             print(f"🔍 Continuing search for micro trendline at {current_date}.")
-    
+    #dosent work!!!!!!!!!!!
+        # === search for MACRO trendline ===
+    if data.at[prev_date, 'Searching_macro_trendline']:
+        data,marco_trendline_end = get_trend_line(
+            data, 
+            current_index=i,
+            column_name='Macro_trendline_from_X',
+            use_min_length_check=True, 
+            min_length=4*30)
 
-        # === search for macro trendline ===
-    if (data.at[prev_date, 'Searching_macro_trendline'] or data.at[current_date, 'Searching_macro_trendline']):
-
-        # find last time Start_of_Dead_Trendline was True
-        last_top_date = data.loc[data['Start_of_Dead_Trendline']].last_valid_index()
-        if last_top_date is None:
-            days_since_last_top = None
-        else:
-            days_since_last_top = (current_date - last_top_date).days
-
-
-        time_ran_out = False
-        if data['Real_uptrend_start'].any():
-            last_start = data.index[data['Real_uptrend_start']].max()
-            if (current_date - last_start).days > 14:
-                time_ran_out = True
+        if marco_trendline_end:
+            data.at[current_date, 'Searching_macro_trendline'] = False
+            print(f"🔍 Macro trendline found at {current_date}")
+            return data
         
-        # only search if 5 months have passed
-        if days_since_last_top is not None and days_since_last_top >= 5*30:
-            # data, macro_trendline_end = get_trend_line(
-            #     data,
-            #     current_index=i,
-            #     column_name='Macro_trendline_from_X'
-            # )
 
-            data, macro_trendline_end = build_macro_trendline_from_last_X(
-                data,
-                current_index=i,
-                column_name='Macro_trendline_from_X',
-                k=7,  # 7 weeks on each side
-                breakout_pct=0.005,  # 0.5%
-                confirm_bars=2,  # N closes above line
-                force_non_positive_slope=True,
-                max_days=21
-            )
-
-
-            if macro_trendline_end:
-                data.at[current_date, 'Searching_macro_trendline'] = False
-                print(f"🛑 Macro trendline found at {current_date}")
-                return data
-
-            elif time_ran_out:
-                data.at[current_date, 'Searching_macro_trendline'] = False
-                print(f"⏹ Macro trendline search ended at {current_date} (time limit reached)")
-                return data
-
-            else:
-                data.at[current_date, 'Searching_macro_trendline'] = True
-                print(f"🔍 Continuing search for macro trendline at {current_date}.")
-        
-        # elif time_ran_out:
-        #     data.at[current_date, 'Searching_macro_trendline'] = False
-        #     print(f"⏹ Macro trendline search ended at {current_date} (time limit reached)")
-        #     return data
         else:
             data.at[current_date, 'Searching_macro_trendline'] = True
-            
-    # === Check for buy zone ===
+            print(f"🔍 Continuing search for macro trendline at {current_date}.")
+        
+
+
+    # === Ensure we have enough data ===
     if i + (26 * 7) < len(data) and i - (12 * 7) >= 0:
         # Future Senkou lines (shifted -26 weeks)
         senb_future = data['W_Senkou_span_B'].shift(-26 * 7)
@@ -117,8 +77,7 @@ def trend_check(data, i):
         senb_now = senb_future.iloc[i]
         senb_prev = senb_future.iloc[i - 7]
         sena_now = sena_future.iloc[i]
-        
-# ===============================================================================
+
         # === CASE 1: Not in uptrend → Look for BUY ZONE ===
         if not prev_uptrend:
             sen_a_confirm = sena_now > senb_now * (1 + sen_a_buffer)
@@ -130,6 +89,7 @@ def trend_check(data, i):
                 senb_now > flat_base_avg * (1 + breakout_pct) and
                 sen_a_confirm and
                 price_above_or_inside_cloud
+                #is micro / macrotrend from top(X) - broken upwards
              ):
                 future_index = i + (26 * 7)
                 data.at[data.index[future_index], 'W_SenB_Future_flat_to_up_point'] = True
@@ -138,10 +98,6 @@ def trend_check(data, i):
                 data.at[current_date, 'Trend_Buy_Zone'] = True
 
                 print(f"📈 Entering Buy Zone: {current_date} (W_SenA confirmed & price in/above D cloud)")
-                #start search for macro trendline
-
-                # make last check did we break out of macro or micro? 
-                print
             else:
                 data.at[current_date, 'Uptrend'] = prev_uptrend
 
@@ -179,10 +135,10 @@ def trend_check(data, i):
                     data.at[current_date, 'Trend_Buy_Zone'] = False
 
                     # Call start point finder
-                    print(f"📉 Entering Dead Zone)")
                     data = find_trend_start_point(data, current_index=i)
                     #data,mirco_trendline_end = find_trend_line_from_start_point_to_current_i(data, current_index=i)
                     data.at[current_date, 'Searching_micro_trendline'] = True
+
                 else:
                     data.at[current_date, 'Uptrend'] = prev_uptrend
 
