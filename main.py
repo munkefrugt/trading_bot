@@ -15,7 +15,7 @@ def main():
     
     data, buys, sells, trades, equity , cash= run_backtest()
     print(f"{len(buys)} buy signals, {len(sells)} sell signals")
-
+    
     
  
     weekly_data_HA = compute_heikin_ashi(weekly_data, prefix="W_", weekly=True)

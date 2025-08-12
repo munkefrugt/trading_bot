@@ -1,5 +1,5 @@
 from build_trend_line import get_trend_line, find_trend_start_point
-from macro_trendline import build_macro_trendline_from_last_X
+from trend.macro_trendline import build_macro_trendline_from_last_X
 def trend_check(data, i):
     """Check W_SenB trend conditions and update uptrend states in `data`."""
 
@@ -72,12 +72,6 @@ def trend_check(data, i):
             data, macro_trendline_end = build_macro_trendline_from_last_X(
                 data,
                 current_index=i,
-                column_name='Macro_trendline_from_X',
-                k=7,  # 7 weeks on each side
-                breakout_pct=0.005,  # 0.5%
-                confirm_bars=2,  # N closes above line
-                force_non_positive_slope=True,
-                max_days=21
             )
 
 
@@ -86,10 +80,10 @@ def trend_check(data, i):
                 print(f"🛑 Macro trendline found at {current_date}")
                 return data
 
-            elif time_ran_out:
-                data.at[current_date, 'Searching_macro_trendline'] = False
-                print(f"⏹ Macro trendline search ended at {current_date} (time limit reached)")
-                return data
+            # elif time_ran_out:
+            #     data.at[current_date, 'Searching_macro_trendline'] = False
+            #     print(f"⏹ Macro trendline search ended at {current_date} (time limit reached)")
+            #     return data
 
             else:
                 data.at[current_date, 'Searching_macro_trendline'] = True

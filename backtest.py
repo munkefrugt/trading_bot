@@ -1,9 +1,9 @@
-from trendcheck import trend_check
+from trend.trendcheck import trend_check
 from trade import Trade
 from get_data import fetch_btc_data, fetch_btc_weekly_data, extend_weekly_index
 from calc_indicators import compute_ema, compute_ichimoku, extend_index, compute_heikin_ashi
 from align_data_time import get_data_with_indicators_and_time_alignment
-from trendcheck import trend_check
+from trend.trendcheck import trend_check
 from sell import sell_check
 from buy import buy_check 
 import pandas as pd
