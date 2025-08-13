@@ -41,6 +41,9 @@ def compute_ichimoku(data, prefix="D_", weekly=False):
 
     ichimoku[f'{prefix}Chikou_span'] = data[f'{prefix}Close'].shift(-26)
 
+    ichimoku[f'{prefix}Senkou_span_A_future'] = ichimoku[f'{prefix}Senkou_span_A'].shift(-26)
+    ichimoku[f'{prefix}Senkou_span_B_future'] = ichimoku[f'{prefix}Senkou_span_B'].shift(-26)
+
     return ichimoku
 
 

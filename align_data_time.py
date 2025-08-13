@@ -4,6 +4,8 @@ from calc_indicators import compute_heikin_ashi, compute_ichimoku, compute_ema, 
 from get_data import extend_weekly_index, fetch_btc_weekly_data, fetch_btc_data
 import pandas as pd
 import numpy as np
+import config
+
 
 def get_data_with_indicators_and_time_alignment():
     # Fetch and prefix daily data
@@ -47,7 +49,8 @@ def get_data_with_indicators_and_time_alignment():
 
     # --- Weekly Ichimoku ---
     weekly_extended = extend_weekly_index(weekly_raw)
-    ichimoku_weekly = compute_ichimoku(weekly_extended, weekly=True)
+    config.ichimoku_weekly = compute_ichimoku(weekly_extended, weekly=True)
+    ichimoku_weekly = config.ichimoku_weekly
     ichimoku_weekly_daily = ichimoku_weekly.reindex(data.index).interpolate(method='time')
     data = pd.concat([data, ichimoku_weekly_daily], axis=1)
 

@@ -1,93 +1,138 @@
-# w_senb_flat_to_rise.py
+# trend/w_senb_flat_to_rise.py
 import numpy as np
-import pandas as pd
-
-DEFAULTS = dict(
-    shift_weeks=26,
-    flat_window_weeks=12,
-    # thresholds are now PERCENT per bar (e.g., 0.00005 = 0.005% per bar)
-    eps_slope_pct=5e-5,         # |slope| <= 0.005%/bar counts as near-flat
-    min_pos_slope_pct=1e-4,     # > 0.01%/bar counts as rising
-    min_break_above_flat=0.005, # 0.5% above flat base
-    confirm_bars=1,             # start with 1; raise to 2 if too noisy
-    sen_a_buffer=0.01
-)
 
 def _linreg_slope(y: np.ndarray) -> float:
-    if len(y) < 2:
+    """Least-squares slope (price units per bar)."""
+    n = len(y)
+    if n < 2:
         return 0.0
-    x = np.arange(len(y), dtype=float)
-    A = np.vstack([x, np.ones(len(x))]).T
+    x = np.arange(n, dtype=float)
+    A = np.vstack([x, np.ones(n)]).T
     slope, _ = np.linalg.lstsq(A, y.astype(float), rcond=None)[0]
-    return float(slope)  # price units per bar
+    return float(slope)
 
-def ensure_column(df: pd.DataFrame, col: str, default=0):
-    if col not in df.columns:
-        df[col] = default
+def flat_to_rise(
+    data,
+    i: int,
+    *,
+    min_flat_weeks: int = 12,           # flat lookback
+    max_flat_slope_pct: float = 5e-5,   # |prev slope| <= this (e.g. 0.005%/bar)
+    max_flat_range_pct: float = 0.01,   # (max-min)/avg <= 1% keeps it “flat”
+    ramp_weeks: int = 3,                # recent-ramp window to measure “turn up”
+    min_curr_slope_pct: float = 1e-4,   # current slope >= this (0.01%/bar)
+    slope_jump_min_pct: float = 7e-5,   # current - previous slope >= this
+    breakout_over_max_pct: float = 0.003, # now above flat MAX by 0.3%
+    confirm_bars: int = 1,              # consecutive bars meeting “rise”
+    shift_weeks: int = 26,              # Ichimoku shift
+    return_details: bool = False,
+):
+    """
+    Stricter 'flat -> rise' for W_Senkou_span_B (shifted):
+      1) A real flat base (low slope *and* tight range).
+      2) Significant slope change vs prior window (ramp up).
+      3) First close above the flat max by a margin (first-cross).
+      4) Optional consecutive-bar confirmation.
 
-def detect_senb_flat_to_rise(data: pd.DataFrame, i: int, config: dict | None = None):
-    C = {**DEFAULTS, **(config or {})}
+    Writes debug columns and a boolean 'SenB_breakout_strict' on the row i.
+    Returns (data, triggered) or (data, (triggered, details)) if return_details.
+    """
+    shift = shift_weeks * 7
+    flat_bars = min_flat_weeks * 7
+    ramp_bars = ramp_weeks * 7
 
-    current_date = data.index[i]
-    shift = C["shift_weeks"] * 7
-    flat_window = C["flat_window_weeks"] * 7
-
-    senb_future = data['W_Senkou_span_B'].shift(-shift)
-    sena_future = data['W_Senkou_span_A'].shift(-shift)
-
-    if i - flat_window < 0 or i - 7 < 0:
-        ensure_column(data, 'SenB_breakout_count', 0)
-        data.at[current_date, 'SenB_breakout_count'] = 0
+    if i < flat_bars or i - ramp_bars < 0 or i >= len(data):
+        if return_details:
+            return data, (False, {})
         return data, False
 
-    senb_past = senb_future.iloc[i - flat_window:i].to_numpy()
-    flat_base_avg = float(np.mean(senb_past)) if len(senb_past) else np.nan
-    slope_abs = _linreg_slope(senb_past)                 # price units / bar
-    slope_pct = slope_abs / flat_base_avg if flat_base_avg else 0.0  # %/bar
+    # Future-aligned weekly spans at "now"
+    senb_future = data['W_Senkou_span_B'].shift(-shift)
 
-    senb_now = float(senb_future.iloc[i])
-    senb_prev = float(senb_future.iloc[i - 7])
-    sena_now = float(sena_future.iloc[i])
+    # Flat window = [i - flat_bars, i)
+    flat_win = senb_future.iloc[i - flat_bars:i].to_numpy()
+    flat_win = flat_win[~np.isnan(flat_win)]
+    if len(flat_win) < max(5, flat_bars // 2):
+        if return_details:
+            return data, (False, {})
+        return data, False
 
-    near_flat = abs(slope_pct) <= C["eps_slope_pct"]
-    breakout_level = senb_now > flat_base_avg * (1 + C["min_break_above_flat"])
-    slope_turn_up = (slope_pct > C["min_pos_slope_pct"]) and (senb_now >= senb_prev)
+    flat_avg = float(np.mean(flat_win))
+    flat_max = float(np.max(flat_win))
+    if not np.isfinite(flat_avg) or flat_avg == 0.0:
+        if return_details:
+            return data, (False, {})
+        return data, False
 
-    # Daily price filter (same as before)
-    price_ok = (
-        data['D_Close'].iloc[i - 1] >= min(data['D_Senkou_span_A'].iloc[i - 1], data['D_Senkou_span_B'].iloc[i - 1]) and
-        data['D_Close'].iloc[i]     >= min(data['D_Senkou_span_A'].iloc[i],     data['D_Senkou_span_B'].iloc[i])
-    )
-    sen_a_confirm = sena_now > senb_now * (1 + C["sen_a_buffer"])
+    # “Prev slope” from the earlier part of flat window (exclude ramp area)
+    prev_end = i - ramp_bars
+    prev_win = senb_future.iloc[i - flat_bars:prev_end].to_numpy()
+    prev_win = prev_win[~np.isnan(prev_win)]
+    if len(prev_win) < 5:
+        prev_win = flat_win  # fallback
 
-    ensure_column(data, 'SenB_breakout_count', 0)
-    if slope_turn_up and breakout_level:
-        prev = int(data['SenB_breakout_count'].iloc[i - 1]) if i > 0 else 0
-        data.at[current_date, 'SenB_breakout_count'] = prev + 1
+    prev_slope = _linreg_slope(prev_win)               # price units per bar
+    prev_slope_pct = prev_slope / flat_avg             # % per bar
+
+    # Current “ramp” slope over recent ramp window
+    curr_win = senb_future.iloc[i - ramp_bars:i].to_numpy()
+    curr_win = curr_win[~np.isnan(curr_win)]
+    curr_slope = _linreg_slope(curr_win)
+    curr_slope_pct = curr_slope / flat_avg
+
+    # Flatness checks
+    flat_range_pct = (np.max(flat_win) - np.min(flat_win)) / flat_avg
+    flatness_ok = (abs(prev_slope_pct) <= max_flat_slope_pct) and (flat_range_pct <= max_flat_range_pct)
+
+    # Slope change significance
+    slope_jump_ok = (curr_slope_pct >= min_curr_slope_pct) and ((curr_slope_pct - prev_slope_pct) >= slope_jump_min_pct)
+
+    # Breakout vs *flat max* + margin (reduces false flags during flat)
+    now = float(senb_future.iloc[i])
+    prev_val = float(senb_future.iloc[i - 7]) if i - 7 >= 0 else now
+    level_ok = now > flat_max * (1 + breakout_over_max_pct)
+
+    # First-cross only (so you don’t get multiple stars in the ramp)
+    prev_level_ok = float(senb_future.iloc[i - 1]) > flat_max * (1 + breakout_over_max_pct) if i - 1 >= 0 else False
+    first_cross_ok = not prev_level_ok
+
+    # Debounce: consecutive bars meeting *slope+level*
+    col = 'SenB_strict_breakout_count'
+    if col not in data.columns:
+        data[col] = 0
+    if slope_jump_ok and level_ok:
+        prev_count = int(data[col].iloc[i - 1]) if i > 0 else 0
+        data.at[data.index[i], col] = prev_count + 1
     else:
-        data.at[current_date, 'SenB_breakout_count'] = 0
+        data.at[data.index[i], col] = 0
 
-    # Debug columns
+    triggered = bool(flatness_ok and slope_jump_ok and level_ok and first_cross_ok and int(data.at[data.index[i], col]) >= confirm_bars)
+
+    # Debug / plotting helpers
     for k, v in dict(
-        SenB_flat_base_avg=flat_base_avg,
-        SenB_slope_pct=slope_pct,
-        SenB_near_flat=near_flat,
-        SenB_breakout_level=breakout_level,
-        SenB_slope_turn_up=slope_turn_up,
-        SenB_price_ok=price_ok,
-        SenB_SenA_confirm=sen_a_confirm,
+        SenB_flat_avg=flat_avg,
+        SenB_flat_max=flat_max,
+        SenB_prev_slope_pct=prev_slope_pct,
+        SenB_curr_slope_pct=curr_slope_pct,
+        SenB_flat_range_pct=flat_range_pct,
+        SenB_level_ok=level_ok,
+        SenB_first_cross=first_cross_ok,
+        SenB_breakout_strict=triggered,
     ).items():
-        ensure_column(data, k, np.nan if "avg" in k or "slope" in k else False)
-        data.at[current_date, k] = v
+        if k not in data.columns:
+            data[k] = np.nan if 'pct' in k or 'avg' in k or 'max' in k or 'range' in k else False
+        data.at[data.index[i], k] = v
 
-    triggered = (
-        near_flat and breakout_level and slope_turn_up and price_ok and sen_a_confirm
-        and int(data.at[current_date, 'SenB_breakout_count']) >= C["confirm_bars"]
-    )
-
-    if triggered:
-        future_index = i + shift
-        if future_index < len(data):
-            data.at[data.index[future_index], 'W_SenB_Future_flat_to_up_point'] = True
+    if return_details:
+        details = {
+            "flat_avg": flat_avg,
+            "flat_max": flat_max,
+            "prev_slope_pct": prev_slope_pct,
+            "curr_slope_pct": curr_slope_pct,
+            "flat_range_pct": flat_range_pct,
+            "level_ok": level_ok,
+            "first_cross_ok": first_cross_ok,
+            "confirm_count": int(data.at[data.index[i], col]),
+        }
+        return data, (triggered, details)
 
     return data, triggered

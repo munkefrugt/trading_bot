@@ -1,6 +1,8 @@
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
+import config
+
 def plot_price_with_indicators(
     data,
     buy_signals=None, 
@@ -58,6 +60,28 @@ def plot_price_with_indicators(
             opacity=0.6,
             visible='legendonly'
             ), row=1, col=1)
+        
+
+    # === Real Weekly Senkou Span A ===
+    fig.add_trace(go.Scatter(
+        x=config.ichimoku_weekly.index,
+        y=config.ichimoku_weekly['W_Senkou_span_A'],
+        mode='lines',
+        name='Real W Senkou Span A',
+        line=dict(color='green', width=1.5),
+        opacity=0.8
+    ), row=1, col=1)
+
+    # === Real Weekly Senkou Span B ===
+    fig.add_trace(go.Scatter(
+        x=config.ichimoku_weekly.index,
+        y=config.ichimoku_weekly['W_Senkou_span_B'],
+        mode='lines',
+        name='Real W Senkou Span B',
+        line=dict(color='red', width=1.5),
+        opacity=0.8
+    ), row=1, col=1)
+
 
     # === Daily EMA lines ===
     ema_config = [

@@ -97,7 +97,7 @@ def get_trend_line(
         else:
             print(f"⏳ Trendline still forming at {data.index[current_index].date()} — R² = {r_squared:.3f}")
 
-    print(f"📉 Trendline (polyfit) from {data.index[start_i].date()} to {data.index[current_index].date()}")
+    #print(f"📉 Trendline (polyfit) from {data.index[start_i].date()} to {data.index[current_index].date()}")
 
     if use_min_length_check and  length < min_length :
         print(" find a longer trendline")

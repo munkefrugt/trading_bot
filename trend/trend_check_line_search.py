@@ -18,7 +18,7 @@ def check_micro_trendline(data, i, prev_date, current_date,price_above_or_inside
         
         else:
             data.at[current_date, 'Searching_micro_trendline'] = True
-            print(f"🔍 Continuing search for micro trendline at {current_date}.")
+            #print(f"🔍 Continuing search for micro trendline at {current_date}.")
     
 def check_macro_trendline(data, i, prev_date, current_date):    
 
@@ -65,7 +65,7 @@ def check_macro_trendline(data, i, prev_date, current_date):
 
             else:
                 data.at[current_date, 'Searching_macro_trendline'] = True
-                print(f"🔍 Continuing search for macro trendline at {current_date}.")
+                #print(f"🔍 Continuing search for macro trendline at {current_date}.")
         
         # elif time_ran_out:
         #     data.at[current_date, 'Searching_macro_trendline'] = False

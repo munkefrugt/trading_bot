@@ -1,21 +1,27 @@
+# trend_check.py
 
+import pandas as pd
+import config
+from trend.w_senb_flat_to_rise import flat_to_rise  # (unused here, keep if you call it elsewhere)
 from trend.build_trend_line import find_trend_start_point
 from trend.trend_check_line_search import check_macro_trendline, check_micro_trendline
+
+
 def trend_check(data, i):
     """Check W_SenB trend conditions and update uptrend states in `data`."""
 
     current_date = data.index[i]
-    prev_date = data.index[i-1]
+    prev_date = data.index[i - 1] if i > 0 else current_date
 
-    # === Configuration ===
+    # --- Config ---
     flat_threshold = 0.04
     breakout_pct = 0.01
-    sen_a_buffer = 0.01  # Require W_SenA to be at least 1% above W_SenB
+    sen_a_buffer = 0.01
 
-    # === Check if we were previously in an uptrend ===
     prev_uptrend = data['Uptrend'].iloc[i - 1] if i > 0 else False
 
-    price_above_or_inside_cloud = (
+    # Daily cloud context for confirmation
+    price_above_or_inside_D_cloud = (
         (
             data['D_Close'].iloc[i - 1] >= data['D_Senkou_span_B'].iloc[i - 1] or
             data['D_Close'].iloc[i - 1] >= data['D_Senkou_span_A'].iloc[i - 1]
@@ -25,91 +31,133 @@ def trend_check(data, i):
             data['D_Close'].iloc[i] >= data['D_Senkou_span_A'].iloc[i]
         )
     )
-    check_micro_trendline(data, i, prev_date, current_date,price_above_or_inside_cloud)
+
+    # Keep your line tracking up-to-date every day
+    check_micro_trendline(data, i, prev_date, current_date, price_above_or_inside_D_cloud)
     check_macro_trendline(data, i, prev_date, current_date)
-       
-    # === Check for buy zone ===
-    if i + (26 * 7) < len(data) and i - (12 * 7) >= 0:
-        # Future Senkou lines (shifted -26 weeks)
-        senb_future = data['W_Senkou_span_B'].shift(-26 * 7)
-        sena_future = data['W_Senkou_span_A'].shift(-26 * 7)
 
-        # Flat base check in the past (before now)
-        senb_past = senb_future.iloc[i - (12 * 7):i]
-        flat_base_avg = senb_past.mean()
-        senb_flat_range = (senb_past.max() - senb_past.min()) / flat_base_avg
+    # Bounds for any future-index writes / lookbacks
+    if not (i + (26 * 7) < len(data) and i - (12 * 7) >= 0):
+        data.at[current_date, 'Uptrend'] = prev_uptrend
+        return data
 
-        # Current values
-        senb_now = senb_future.iloc[i]
-        senb_prev = senb_future.iloc[i - 7]
-        sena_now = sena_future.iloc[i]
-        
-# ===============================================================================
-        # === CASE 1: Not in uptrend → Look for BUY ZONE ===
-        if not prev_uptrend:
-            sen_a_confirm = sena_now > senb_now * (1 + sen_a_buffer)
+    # --- Weekly DF with future spans ---
+    w = config.ichimoku_weekly
+    if ('W_Senkou_span_B_future' not in w.columns) or ('W_Senkou_span_A_future' not in w.columns):
+        if ('W_Senkou_span_B' not in w.columns) or ('W_Senkou_span_A' not in w.columns):
+            data.at[current_date, 'Uptrend'] = prev_uptrend
+            return data
+        w = w.copy()
+        w['W_Senkou_span_A_future'] = w['W_Senkou_span_A'].shift(-26)  # 26 weeks ahead
+        w['W_Senkou_span_B_future'] = w['W_Senkou_span_B'].shift(-26)
+        config.ichimoku_weekly = w
 
+    # Only run weekly logic on exact weekly dates
+    if current_date not in w.index:
+        data.at[current_date, 'Uptrend'] = prev_uptrend
+        return data
 
-            # Buy Zone conditions:
-            if (
-                senb_flat_range < flat_threshold and
-                senb_now > flat_base_avg * (1 + breakout_pct) and
-                sen_a_confirm and
-                price_above_or_inside_cloud
-             ):
-                future_index = i + (26 * 7)
+    p = w.index.get_loc(current_date)
+    if isinstance(p, slice):
+        # if duplicate labels, use the last occurrence
+        p = list(range(p.start, p.stop, p.step or 1))[-1]
+    elif isinstance(p, (list, tuple)):
+        p = p[-1]
+
+    if p == 0:
+        data.at[current_date, 'Uptrend'] = prev_uptrend
+        return data
+
+    # Weekly (future-shifted) values
+    w_senA_future = w['W_Senkou_span_A_future'].iloc[p]
+    w_senB_future = w['W_Senkou_span_B_future'].iloc[p]
+    w_senA_future_prev = w['W_Senkou_span_A_future'].iloc[p - 1]
+    w_senB_future_prev = w['W_Senkou_span_B_future'].iloc[p - 1]
+
+    # Gate: require SenB_future to rise WoW
+    if not pd.notna(w_senB_future) or not pd.notna(w_senB_future_prev) or not (w_senB_future > w_senB_future_prev + 1e-9):
+        data.at[current_date, 'Uptrend'] = prev_uptrend
+        return data
+
+    # Flat base over past 12 weeks (exclude current week)
+    lookback_w = 12
+    if p - lookback_w < 0:
+        data.at[current_date, 'Uptrend'] = prev_uptrend
+        return data
+    w_senB_past = w['W_Senkou_span_B_future'].iloc[p - lookback_w: p]
+    flat_base_avg = w_senB_past.mean()
+    if not pd.notna(flat_base_avg) or flat_base_avg == 0:
+        data.at[current_date, 'Uptrend'] = prev_uptrend
+        return data
+    senb_flat_range = (w_senB_past.max() - w_senB_past.min()) / flat_base_avg
+
+    # Week-ago values (already have prev)
+    w_senA_week_ago = w_senA_future_prev
+    w_senB_week_ago = w_senB_future_prev
+
+    # === CASE 1: Not in uptrend → BUY ZONE ===
+    if not prev_uptrend:
+        sen_a_confirm = w_senA_future > w_senB_future * (1 + sen_a_buffer)
+
+        if (
+            senb_flat_range < flat_threshold and
+            w_senB_future > flat_base_avg * (1 + breakout_pct) and
+            w_senA_future > w_senA_week_ago and
+            w_senB_future > w_senB_week_ago and
+            sen_a_confirm and
+            price_above_or_inside_D_cloud
+        ):
+            future_index = i + (26 * 7)
+            if future_index < len(data):
                 data.at[data.index[future_index], 'W_SenB_Future_flat_to_up_point'] = True
-                data.at[data.index[i], 'Real_uptrend_start'] = True
-                data.at[current_date, 'Uptrend'] = True
-                data.at[current_date, 'Trend_Buy_Zone'] = True
 
-                print(f"📈 Entering Buy Zone: {current_date} (W_SenA confirmed & price in/above D cloud)")
-                #start search for macro trendline
+            data.at[data.index[i], 'Real_uptrend_start'] = True
+            data.at[current_date, 'Uptrend'] = True
+            data.at[current_date, 'Trend_Buy_Zone'] = True
 
-                # make last check did we break out of macro or micro? 
-                print
-            else:
-                data.at[current_date, 'Uptrend'] = prev_uptrend
+            # Make sure your executor sees a buy:
+            data.at[current_date, 'Buy_Signal'] = True
+            data.at[current_date, 'Signal'] = 'BUY'
+            data.at[current_date, 'Entry_Price'] = data['D_Close'].iloc[i]
 
-        # === CASE 2: Already in uptrend → Look for DEAD ZONE ===
+            print(f"📈 Entering Buy Zone: {current_date} (W_SenA confirmed & price in/above D cloud)")
         else:
-            if i - (4 * 7) >= 0:
-                lookback = 4 * 7
+            data.at[current_date, 'Uptrend'] = prev_uptrend
 
-                senb_4w = senb_future.iloc[i - lookback:i]
-                future_trend_down = senb_now < senb_prev
-                future_trend_flat = (
-                    (senb_4w.max() - senb_4w.min()) / senb_4w.mean()
-                ) < 0.005
+    # === CASE 2: Already in uptrend → DEAD ZONE ===
+    else:
+        lookback_w_death = 4
+        start = max(0, p - lookback_w_death)
+        senb_4w = w['W_Senkou_span_B_future'].iloc[start: p + 1]  # include current week
+        mean4 = senb_4w.mean()
+        future_trend_down = w_senB_future < w_senB_future_prev
+        future_trend_flat = (mean4 is not None and mean4 != 0) and ((senb_4w.max() - senb_4w.min()) / mean4 < 0.005)
 
-                ema50_past = data['EMA_50'].iloc[i - lookback]
-                ema50_now = data['EMA_50'].iloc[i]
-                ema_decline = ema50_past > ema50_now
+        # Daily EMA/cloud checks (use 4 weeks ~ 28 daily rows)
+        ema50_past = data['EMA_50'].iloc[i - 4 * 7] if i - 4 * 7 >= 0 else data['EMA_50'].iloc[0]
+        ema50_now = data['EMA_50'].iloc[i]
+        ema_decline = ema50_past > ema50_now
 
-                price_below_cloud = (
-                    data['D_Close'].iloc[i - 1] < data['D_Senkou_span_A'].iloc[i - 1] and
-                    data['D_Close'].iloc[i - 1] < data['D_Senkou_span_B'].iloc[i - 1] and
-                    data['D_Close'].iloc[i] < data['D_Senkou_span_A'].iloc[i] and
-                    data['D_Close'].iloc[i] < data['D_Senkou_span_B'].iloc[i]
-                )
+        price_below_cloud = (
+            data['D_Close'].iloc[i - 1] < data['D_Senkou_span_A'].iloc[i - 1] and
+            data['D_Close'].iloc[i - 1] < data['D_Senkou_span_B'].iloc[i - 1] and
+            data['D_Close'].iloc[i] < data['D_Senkou_span_A'].iloc[i] and
+            data['D_Close'].iloc[i] < data['D_Senkou_span_B'].iloc[i]
+        )
 
-                if (
-                    (future_trend_down or future_trend_flat) and
-                    ema_decline and
-                    price_below_cloud
-                ):
-                    future_index = i + (26 * 7)
-                    data.at[data.index[future_index], 'W_SenB_Trend_Dead'] = True
-                    data.at[data.index[i], 'Real_uptrend_end'] = True
-                    data.at[current_date, 'Uptrend'] = False
-                    data.at[current_date, 'Trend_Buy_Zone'] = False
+        if (future_trend_down or future_trend_flat) and ema_decline and price_below_cloud:
+            future_index = i + (26 * 7)
+            if future_index < len(data):
+                data.at[data.index[future_index], 'W_SenB_Trend_Dead'] = True
 
-                    # Call start point finder
-                    print(f"📉 Entering Dead Zone)")
-                    data = find_trend_start_point(data, current_index=i)
-                    #data,mirco_trendline_end = find_trend_line_from_start_point_to_current_i(data, current_index=i)
-                    data.at[current_date, 'Searching_micro_trendline'] = True
-                else:
-                    data.at[current_date, 'Uptrend'] = prev_uptrend
+            data.at[data.index[i], 'Real_uptrend_end'] = True
+            data.at[current_date, 'Uptrend'] = False
+            data.at[current_date, 'Trend_Buy_Zone'] = False
+
+            print("📉 Entering Dead Zone)")
+            data = find_trend_start_point(data, current_index=i)
+            data.at[current_date, 'Searching_micro_trendline'] = True
+        else:
+            data.at[current_date, 'Uptrend'] = prev_uptrend
 
     return data
