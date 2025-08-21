@@ -313,3 +313,13 @@ Next step:
 - Optional: try adding `changepoint_range=0.9` and/or tuning `changepoint_prior_scale` for better short-term fit
 - Optional: explore adding Prophet's upper/lower bounds as synthetic "trend channel" for overbought/oversold signals
 ===========================
+
+
+==== ENTRY 2025-08-14 ====
+Decision: Shift focus toward multi-timeframe trendlines as the backbone of the algorithm.
+Reasoning: Trendlines mirror how I personally read charts and feel more intuitive than indicators. My frustration comes from the algo buying late and selling low — trendlines might align better with human judgment.
+Evidence: Manual inspection shows that aligning entries with trendline bounces/breaks on higher + lower timeframes would have captured trades my coarse filter excluded.
+Assumptions: Trendlines can be coded consistently using confirmed pivots and regression (R²) checks; multi-timeframe alignment improves signal quality.
+Potential bias: Risk of cherry-picking charts where trendlines look “clean”; may underestimate complexity of automation and overfit to idealized cases.
+Next step: Prototype a simple function that builds a single clean trendline from confirmed pivots and test it against a few historical periods. If promising, expand to multi-timeframe integration.
+===========================

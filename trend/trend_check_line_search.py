@@ -1,15 +1,28 @@
 from trend.build_trend_line import get_trend_line, find_trend_start_point
 from trend.macro_trendline import build_macro_trendline_from_last_X
 #=== search for micro trendline ===
-def check_micro_trendline(data, i, prev_date, current_date,price_above_or_inside_cloud):    
+def check_micro_trendline(data, i, prev_date, current_date):    
     if data.at[prev_date, 'Searching_micro_trendline']:
+
+        # Daily cloud context for confirmation
+        price_above_or_D_inside_cloud = (
+            (
+                data['D_Close'].iloc[i - 1] >= data['D_Senkou_span_B'].iloc[i - 1] or
+                data['D_Close'].iloc[i - 1] >= data['D_Senkou_span_A'].iloc[i - 1]
+            ) and
+            (
+                data['D_Close'].iloc[i] >= data['D_Senkou_span_B'].iloc[i] or
+                data['D_Close'].iloc[i] >= data['D_Senkou_span_A'].iloc[i]
+            )
+        )
+
         data,mirco_trendline_end = get_trend_line(data, current_index=i)
         if mirco_trendline_end:
             data.at[current_date, 'Searching_micro_trendline'] = False
             #print(f"🔍 Micro trendline found at {current_date}")
             return data
         
-        elif price_above_or_inside_cloud: 
+        elif price_above_or_D_inside_cloud: 
             data.at[current_date, 'Searching_micro_trendline'] = False
             #print(f"🔍 Micro trendline search ended at {current_date} due to price in D_cloud.")
             data.at[current_date, 'Searching_macro_trendline'] = True

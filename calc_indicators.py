@@ -1,6 +1,6 @@
 #calc_indicators.py
 import pandas as pd
-
+import numpy as np
 
 
 def compute_ema(data, period=200, column='D_Close'):
@@ -47,7 +47,7 @@ def compute_ichimoku(data, prefix="D_", weekly=False):
     return ichimoku
 
 
-
+    
 
 def compute_heikin_ashi(data, prefix="D_", weekly=False):
     """
@@ -131,3 +131,21 @@ def extend_index(df, future_days=26):
     new_dates = pd.date_range(start=start, periods=future_days, freq=freq)
     extension = pd.DataFrame(index=new_dates)
     return pd.concat([df_extended, extension])
+
+def WMA(series, length):
+    weights = np.arange(1, length + 1)
+    return series.rolling(length).apply(lambda prices: np.dot(prices, weights) / weights.sum(), raw=True)
+
+def compute_HMA(data, periods, prefix="D_"):
+    hma = pd.DataFrame(index=data.index)
+    
+    for period in periods:
+        half_length = max(1, period // 2)
+        sqrt_length = max(1, int(period ** 0.5))
+
+        wma_half = WMA(data[f'{prefix}Close'], half_length)
+        wma_full = WMA(data[f'{prefix}Close'], period)
+
+        hma[f'{prefix}HMA_{period}'] = WMA(2 * wma_half - wma_full, sqrt_length)
+
+    return hma

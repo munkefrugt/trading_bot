@@ -17,9 +17,13 @@ def get_data_with_indicators_and_time_alignment():
     weekly_raw.columns = [f"W_{col}" for col in weekly_raw.columns]
 
     # --- Daily indicators ---
+    data['EMA_9'] = compute_ema(data, 9)
     data['EMA_20'] = compute_ema(data, 20)
     data['EMA_50'] = compute_ema(data, 50)
+    data['EMA_100'] = compute_ema(data, 100)
     data['EMA_200'] = compute_ema(data, 200)
+    data['EMA_365'] = compute_ema(data, 365)
+
 
     # Add Bollinger Bands (Daily)
     bb_daily = compute_bollinger_bands(data, period=20, std_dev=2, prefix="D_")

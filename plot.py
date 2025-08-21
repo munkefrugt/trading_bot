@@ -19,7 +19,16 @@ def plot_price_with_indicators(
         vertical_spacing=0.03,
         subplot_titles=("Price with Indicators", "Equity Curve", "Cash")
     )
-
+    # === Daily close price ===
+    fig.add_trace(go.Scatter(
+        x=data.index,
+        y=data['D_Close'],
+        mode='lines',
+        name='Daily Close',
+        line=dict(color='black', width=1.5),
+        visible=True
+    ), row=1, col=1)    
+    
     # === Daily price candlesticks ===
     fig.add_trace(go.Candlestick(
         x=data.index,
@@ -30,7 +39,21 @@ def plot_price_with_indicators(
         name='Daily',
         visible=True
     ), row=1, col=1)
-    
+    # === Weekly price candlesticks ===
+    if all(col in data.columns for col in ['W_Open', 'W_High', 'W_Low', 'W_Close']):
+        fig.add_trace(go.Candlestick(
+            x=data.index,
+            open=data['W_Open'],
+            high=data['W_High'],
+            low=data['W_Low'],
+            close=data['W_Close'],
+            name='Weekly',
+            increasing_line_color='green',
+            decreasing_line_color='red',
+            opacity=0.7,
+            visible='legendonly'
+        ), row=1, col=1)
+
     # === Weekly HA candlesticks ===
     if all(col in data.columns for col in ['W_HA_Open', 'W_HA_High', 'W_HA_Low', 'W_HA_Close']):
         fig.add_trace(go.Candlestick(
@@ -72,6 +95,38 @@ def plot_price_with_indicators(
         opacity=0.8
     ), row=1, col=1)
 
+    # === Weekly Bollinger Bands (20) ===
+    if {'W_BB_Middle_20','W_BB_Upper_20','W_BB_Lower_20'}.issubset(config.weekly_bb.columns):
+        # Middle line
+        fig.add_trace(go.Scatter(
+            x=config.weekly_bb.index,
+            y=config.weekly_bb['W_BB_Middle_20'],
+            mode='lines',
+            name='W BB Middle (20)',
+            line=dict(color='gray', width=2, dash='dot')
+        ), row=1, col=1)
+
+        # Upper band
+        fig.add_trace(go.Scatter(
+            x=config.weekly_bb.index,
+            y=config.weekly_bb['W_BB_Upper_20'],
+            mode='lines',
+            name='W BB Upper (20)',
+            line=dict(color='darkblue', width=1)
+        ), row=1, col=1)
+
+        # Lower band
+        fig.add_trace(go.Scatter(
+            x=config.weekly_bb.index,
+            y=config.weekly_bb['W_BB_Lower_20'],
+            mode='lines',
+            name='W BB Lower (20)',
+            line=dict(color='darkblue', width=1)
+        ), row=1, col=1)
+
+
+
+
     # === Real Weekly Senkou Span B ===
     fig.add_trace(go.Scatter(
         x=config.ichimoku_weekly.index,
@@ -85,8 +140,13 @@ def plot_price_with_indicators(
 
     # === Daily EMA lines ===
     ema_config = [
+        ('EMA_9', 'red', 'EMA 9'),
+        ('EMA_20', 'orange', 'EMA 20'),
         ('EMA_50', 'blue', 'EMA 50'),
-        ('EMA_200', 'darkcyan', 'EMA 200')
+        ('EMA_100', 'purple', 'EMA 100'),
+        ('EMA_200', 'darkcyan', 'EMA 200'),
+        ('EMA_365', 'darkgreen', 'EMA 365')
+
     ]
     for col, color, label in ema_config:
         if col in data.columns:
@@ -366,6 +426,57 @@ def plot_price_with_indicators(
             line=dict(color='blue', width=2)
         ), row=1, col=1)
 
+    # bb wwekly squeeze
+    if 'W_BB_Squeeze' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['W_BB_Squeeze'],
+            mode='lines',
+            name='Weekly BB Squeeze',
+            line=dict(color='purple', width=2, dash='dash'),
+            visible='legendonly'
+        ), row=1, col=1)
+
+    # === HMA Lines ===
+    if 'W_HMA_14' in config.weekly_HMA.columns:
+        fig.add_trace(go.Scatter(
+            x=config.weekly_HMA.index,
+            y=config.weekly_HMA['W_HMA_14'],
+            mode='lines',
+            name='W HMA 14',
+            line=dict(color='cyan', width=1.5),
+            visible='legendonly'
+        ), row=1, col=1)
+        
+    if 'W_HMA_25' in config.weekly_HMA.columns:
+        fig.add_trace(go.Scatter(
+            x=config.weekly_HMA.index,
+            y=config.weekly_HMA['W_HMA_25'],
+            mode='lines',
+            name='W HMA 25',
+            line=dict(color='blue', width=1.5),
+            visible='legendonly'
+        ), row=1, col=1)
+
+    if 'W_HMA_50' in config.weekly_HMA.columns:
+        fig.add_trace(go.Scatter(
+            x=config.weekly_HMA.index,
+            y=config.weekly_HMA['W_HMA_50'],
+            mode='lines',
+            name='W HMA 50',
+            line=dict(color='orange', width=1.5),
+            visible='legendonly'
+        ), row=1, col=1)
+    
+    if 'W_HMA_100' in config.weekly_HMA.columns:
+        fig.add_trace(go.Scatter(
+            x=config.weekly_HMA.index,
+            y=config.weekly_HMA['W_HMA_100'],
+            mode='lines',
+            name='W HMA 100',
+            line=dict(color='purple', width=1.5),
+            visible='legendonly'
+        ), row=1, col=1)
 
     # === Equity subplot ===
     if equity_curve is not None:

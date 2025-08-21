@@ -42,9 +42,9 @@ def run_backtest():
         equity_index.append(current_date)
         cash_series.append(cash)
 
+        
         # === Trend Check ===
         data = trend_check(data, i)  # No column initialization inside anymore
-
         # === Buy Check only if Uptrend ===
         if data['Uptrend'].iloc[i]:
             open_trades, cash, buy_markers, trades, data = buy_check(
