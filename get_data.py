@@ -38,7 +38,7 @@ start = "2015-01-01"
 end = datetime.today().strftime("%Y-%m-%d")
 
 def fetch_btc_data(start=start, end=end, interval="1d"):
-    data = yf.download("BTC-USD", start=start, end=end, interval=interval, auto_adjust=False)
+    data = yf.download("BNB-USD", start=start, end=end, interval=interval, auto_adjust=False)
     
     # Flatten multi-level column names if needed
     if isinstance(data.columns, pd.MultiIndex):

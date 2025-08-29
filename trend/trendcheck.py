@@ -5,7 +5,7 @@ import config
 from trend.w_senb_flat_to_rise import flat_to_rise  # (unused here, keep if you call it elsewhere)
 from trend.build_trend_line import find_trend_start_point
 from trend.trend_check_line_search import check_macro_trendline, check_micro_trendline
-
+from trend.senb_consolidation import mark_senb_edge_simple
 
 def trend_check(data, i):
     """Check W_SenB trend conditions and update uptrend states in `data`."""
@@ -77,7 +77,9 @@ def trend_check(data, i):
         else:
             positive_w_ha = False            
         # === CASE 1: Not in uptrend → BUY ZONE ===
-        if (not prev_uptrend and w_senB_future > w_senB_future_prev):
+        #if (not prev_uptrend and w_senB_future > w_senB_future_prev):
+
+        if ( w_senB_future > w_senB_future_prev):
 
                 sen_a_confirm = w_senA_future > w_senB_future * (1 + sen_a_buffer)
                 # zone conditions
@@ -95,18 +97,28 @@ def trend_check(data, i):
                 ):
                     future_index = i + (26 * 7)
                     if future_index < len(data):
+                        future_date = data.index[future_index]
                         data.at[data.index[future_index], 'W_SenB_Future_flat_to_up_point'] = True
 
+                        mark_senb_edge_simple(
+                            data,
+                            current_date=future_date,
+                            #use_future_span=True,
+                            #anchor_weeks=12,
+                            #slope_tol=0.003,
+                            #write_price_marker=True
+                        )
+
+                        
                     data.at[data.index[i], 'Real_uptrend_start'] = True
                     data.at[current_date, 'Uptrend'] = True
                     data.at[current_date, 'Trend_Buy_Zone'] = True
-
-                    # Make sure your executor sees a buy:
-                    data.at[current_date, 'Buy_Signal'] = True
-                    data.at[current_date, 'Signal'] = 'BUY'
-                    data.at[current_date, 'Entry_Price'] = data['D_Close'].iloc[i]
-
+                    
                     print(f"📈 Entering Buy Zone: {current_date} (W_SenA confirmed & price in/above D cloud)")
+
+
+
+
                 else:
                     data.at[current_date, 'Uptrend'] = prev_uptrend
         

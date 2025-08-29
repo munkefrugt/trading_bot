@@ -13,16 +13,25 @@ import numpy as np
 def run_backtest():
     data = get_data_with_indicators_and_time_alignment()
 
-    #Initialize columns for trend_check
+    # Initialize columns for trend_check + consolidation
     required_cols = [
-        'Uptrend', 'Trend_Buy_Zone', 
+        'Uptrend', 'Trend_Buy_Zone',
         'W_SenB_Future_flat_to_up_point', 'W_SenB_Trend_Dead',
         'Real_uptrend_start', 'Real_uptrend_end', 'Searching_micro_trendline',
-        'Searching_macro_trendline', 'Start_of_Dead_Trendline'
+        'Searching_macro_trendline', 'Start_of_Dead_Trendline',
+        'W_SenB_Consol_Start_SenB',
+        'W_SenB_Consol_Start_Price',
+        #'W_SenB_Consol_Window',
     ]
+
     for col in required_cols:
-        if col not in data.columns:
-            data[col] = False
+        if col == 'W_SenB_Consol_Window':
+            if col not in data.columns:
+                data[col] = np.nan
+        else:
+            if col not in data.columns:
+                data[col] = False
+
 
 
     trades, buy_markers, sell_markers, open_trades = [], [], [], []
@@ -44,7 +53,8 @@ def run_backtest():
 
         
         # === Trend Check ===
-        data = trend_check(data, i)  # No column initialization inside anymore
+        data = trend_check(data, i) 
+
         # === Buy Check only if Uptrend ===
         if data['Uptrend'].iloc[i]:
             open_trades, cash, buy_markers, trades, data = buy_check(

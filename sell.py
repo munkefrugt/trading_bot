@@ -57,11 +57,14 @@ def sell_check(open_trades, data, i, cash, sell_markers):
         data['D_Close'].iloc[i -1] < kijun_sen 
     )
     broke_into_cloud = (close < D_sen_A or close < D_sen_B)
+    d_tenkan_sen = data['D_Tenkan_sen'].iloc[i]
     should_sell
+    
     for trade in open_trades[:]:
         if (#close_crossed_down_ema50 and 
+            close < d_tenkan_sen
             #broke_into_cloud
-            w_hma_14 < w_hma_25
+            #w_hma_14 < w_hma_25
             #ema_9 < ema_20
             #close < w_tenkan_sen
             #(close_under_kijun_2_days or D_sen_A_future < D_sen_B_future)

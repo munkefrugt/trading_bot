@@ -37,6 +37,12 @@ def get_data_with_indicators_and_time_alignment():
     data['DC_Lower_365'] = data['D_Low'].rolling(window=period).min()
     data['DC_Middle_365'] = (data['DC_Upper_365'] + data['DC_Lower_365']) / 2
 
+
+    data['DC_Upper_26'] = data['D_High'].rolling(window=26).max()
+    data['DC_Lower_26'] = data['D_Low'].rolling(window=26).min()
+    data['DC_Middle_26'] = (data['DC_Upper_26'] + data['DC_Lower_26']) / 2
+
+
     # Extend daily index by 182 days (26 weeks) for future Ichimoku cloud
     future_days = 26 * 7
     data = extend_index(data, future_days=future_days)
