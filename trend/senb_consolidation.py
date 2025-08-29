@@ -39,35 +39,37 @@ def mark_senb_edge_simple(
     
     anchor_pos = max(1, rise_pos- anchor_weeks)
 
+    w_sen_B_pct = w["W_Senkou_span_B_slope_pct"]
 
- 
     back_trace_pos = anchor_pos
     start_pos = anchor_pos  
-    # backtrace from anchor to find dropoff point. 
-    while  back_trace_pos > 0:
+
+    while back_trace_pos > 0:
         cur_senA = w_sen_A_fut.iloc[back_trace_pos]
         cur_senB = w_sen_B_fut.iloc[back_trace_pos]
-        prev_senA = w_sen_A_fut.iloc[back_trace_pos -1]
-        prev_senB = w_sen_B_fut.iloc[back_trace_pos -1]
-        # senB / A cross
+        prev_senA = w_sen_A_fut.iloc[back_trace_pos - 1]
+        prev_senB = w_sen_B_fut.iloc[back_trace_pos - 1]
+
+        # SenB / A cross
         if (prev_senB > prev_senA) and (cur_senB >= cur_senA):
             start_pos = back_trace_pos
             break
-        # did senB make breakout down witin the last 5 weeks?
-        lb = 6  # lookback window
-        win_start = max(0, back_trace_pos - lb)
-        window = w_sen_B_fut.iloc[win_start:back_trace_pos+1]
 
-        cliff_idx = find_senb_cliff(window, direction="decreasing")
-        if cliff_idx is not None:
-            start_pos = win_start + cliff_idx
+        # slope threshold check (relative slope > 1%)
+        if w_sen_B_pct.iloc[back_trace_pos] > 1.0:
+            start_pos = back_trace_pos
             break
 
-        
-        
-        back_trace_pos -= 1
-        
+        # fallback: cliff check in recent window
+        # lb = 6  # lookback window
+        # win_start = max(0, back_trace_pos - lb)
+        # window = w_sen_B_fut.iloc[win_start:back_trace_pos + 1]
+        # cliff_idx = find_senb_cliff(window, direction="decreasing")
+        # if cliff_idx is not None:
+        #     start_pos = win_start + cliff_idx
+        #     break
 
+        back_trace_pos -= 1
 
     start_week = w.index[start_pos]
     data.loc[start_week, "W_SenB_Consol_Start_SenB"] = True

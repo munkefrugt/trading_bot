@@ -5,6 +5,7 @@ from get_data import extend_weekly_index, fetch_btc_weekly_data, fetch_btc_data
 import pandas as pd
 import numpy as np
 import config
+from math_helpers import smooth_savgol
 
 
 def get_data_with_indicators_and_time_alignment():
@@ -60,6 +61,22 @@ def get_data_with_indicators_and_time_alignment():
     # --- Weekly Ichimoku ---
     weekly_extended = extend_weekly_index(weekly_raw)
     config.ichimoku_weekly = compute_ichimoku(weekly_extended, weekly=True)
+    # add smooth senbou span B with filering
+
+    # Smooth weekly Senkou Span B (weekly index)
+    w = config.ichimoku_weekly
+    w['W_Senkou_span_B_smooth'] = smooth_savgol(
+        w['W_Senkou_span_B'], window=9, polyorder=2
+    )
+    # (optional) also keep a smoothed slope (first derivative) for knee finding
+    w['W_Senkou_span_B_smooth_slope'] = smooth_savgol(
+        w['W_Senkou_span_B'], window=9, polyorder=2, deriv=1
+    )
+    # relative slope in percent (derivative / value * 100)
+    w['W_Senkou_span_B_slope_pct'] = (
+        w['W_Senkou_span_B_smooth_slope'] / w['W_Senkou_span_B_smooth'] * 100
+    )
+    
     ichimoku_weekly = config.ichimoku_weekly
     ichimoku_weekly_daily = ichimoku_weekly.reindex(data.index).interpolate(method='time')
     data = pd.concat([data, ichimoku_weekly_daily], axis=1)

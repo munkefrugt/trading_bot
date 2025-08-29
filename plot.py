@@ -349,6 +349,29 @@ def plot_price_with_indicators(
     #             line=dict(color='red', width=2, dash='dot')
     #         ), row=1, col=1)
 
+
+    # === Smoothed Weekly Senkou Span B (Savitzky–Golay) ===
+    if 'W_Senkou_span_B_smooth' in config.ichimoku_weekly.columns:
+        fig.add_trace(go.Scatter(
+            x=config.ichimoku_weekly.index,
+            y=config.ichimoku_weekly['W_Senkou_span_B_smooth'],
+            mode='lines',
+            name='W Senkou Span B (smoothed)',
+            line=dict(color='blue', width=2, dash='solid'),
+            opacity=0.9
+        ), row=1, col=1)
+
+    # === Optional: slope of smoothed SenB ===
+    if 'W_Senkou_span_B_slope_pct' in config.ichimoku_weekly.columns:
+        fig.add_trace(go.Scatter(
+            x=config.ichimoku_weekly.index,
+            y=config.ichimoku_weekly['W_Senkou_span_B_slope_pct'],
+            mode='lines',
+            name='Slope of W SenB (relative pct)',
+            line=dict(color='blue', width=1, dash='dot'),
+            opacity=0.8
+        ), row=2, col=1)  # slope makes sense in 2nd subplot
+
     # === Plot Trendline_from_top (X) if it exists ===
     if 'Trendline_from_X' in data.columns:
         fig.add_trace(go.Scatter(
