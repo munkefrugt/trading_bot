@@ -76,6 +76,11 @@ def get_data_with_indicators_and_time_alignment():
     w['W_Senkou_span_B_slope_pct'] = (
         w['W_Senkou_span_B_smooth_slope'] / w['W_Senkou_span_B_smooth'] * 100
     )
+
+    # smooth smooth_savgol on price data
+    data['D_Close_smooth'] = smooth_savgol(
+        data['D_Close'], window=60, polyorder=2
+    ) 
     
     ichimoku_weekly = config.ichimoku_weekly
     ichimoku_weekly_daily = ichimoku_weekly.reindex(data.index).interpolate(method='time')

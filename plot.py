@@ -39,6 +39,18 @@ def plot_price_with_indicators(
         name='Daily',
         visible=True
     ), row=1, col=1)
+
+    # === D_Close_smooth ===
+    if 'D_Close_smooth' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['D_Close_smooth'],
+            mode='lines',
+            name='D Close (smoothed)',
+            line=dict(color='purple', width=1.5),
+            opacity=0.8
+        ), row=1, col=1)
+
     # === Weekly price candlesticks ===
     if all(col in data.columns for col in ['W_Open', 'W_High', 'W_Low', 'W_Close']):
         fig.add_trace(go.Candlestick(
@@ -453,6 +465,32 @@ def plot_price_with_indicators(
                 marker=dict(color='darkblue', size=14, symbol='x')
             ), row=1, col=1)
 
+    if 'W_SenB_Consol_Start_Price_Adjusted' in data.columns:
+        adjusted_price_points = data[data['W_SenB_Consol_Start_Price_Adjusted']]
+        if not adjusted_price_points.empty:
+            fig.add_trace(go.Scatter(
+                x=adjusted_price_points.index,
+                y=adjusted_price_points['D_Close_smooth'], 
+                mode='markers',
+                name='SenB Consol Start Price (Adjusted)',
+                marker=dict(color='red', size=14, symbol='x')
+            ), row=1, col=1)
+    
+    
+
+    # === Regression line from last adjusted start ===
+    col = 'Regline_from_last_adjusted'
+    if col in data.columns:
+        reg = pd.to_numeric(data[col], errors='coerce').dropna()
+        if not reg.empty:
+            fig.add_trace(go.Scatter(
+                x=reg.index,        # <- like your macro code
+                y=reg,              # <- series directly
+                mode='lines',
+                name='Regression from last adjusted start',
+                line=dict(width=2, dash='dash'),
+                connectgaps=False   # don't bridge NaN gaps
+            ), row=1, col=1)
 
     # === Buy Markers ===
     if buy_signals:

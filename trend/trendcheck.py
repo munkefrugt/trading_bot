@@ -5,7 +5,9 @@ import config
 from trend.w_senb_flat_to_rise import flat_to_rise  # (unused here, keep if you call it elsewhere)
 from trend.build_trend_line import find_trend_start_point
 from trend.trend_check_line_search import check_macro_trendline, check_micro_trendline
-from trend.senb_consolidation import mark_senb_edge_simple
+from trend.senb_consolidation import mark_senb_edge
+from trend.macro_trendline import  build_macro_trendline_from_last_X
+from trend.regression_line import build_regression_from_last_adjusted_start
 
 def trend_check(data, i):
     """Check W_SenB trend conditions and update uptrend states in `data`."""
@@ -100,24 +102,27 @@ def trend_check(data, i):
                         future_date = data.index[future_index]
                         data.at[data.index[future_index], 'W_SenB_Future_flat_to_up_point'] = True
 
-                        mark_senb_edge_simple(
-                            data,
-                            current_date=future_date,
-                            #use_future_span=True,
-                            #anchor_weeks=12,
-                            #slope_tol=0.003,
-                            #write_price_marker=True
-                        )
-
-                        
                     data.at[data.index[i], 'Real_uptrend_start'] = True
                     data.at[current_date, 'Uptrend'] = True
                     data.at[current_date, 'Trend_Buy_Zone'] = True
-                    
                     print(f"📈 Entering Buy Zone: {current_date} (W_SenA confirmed & price in/above D cloud)")
 
+                    data = mark_senb_edge(
+                        data,
+                        current_date=future_date,
+                    )
 
 
+                    data = build_regression_from_last_adjusted_start(
+                        data,
+                        current_index=i,
+                        out_col="Regline_from_last_adjusted",
+                        flag_col="W_SenB_Consol_Start_Price_Adjusted",
+                        min_points=5,
+                    )
+                    
+                # does w_tenkansen and the found regression baseline nearly "overlay"?
+                # if so its a really good sign. 
 
                 else:
                     data.at[current_date, 'Uptrend'] = prev_uptrend

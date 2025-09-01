@@ -1,4 +1,4 @@
-# macro_trendline.py
+# trend.macro_trendline.py
 import numpy as np
 import pandas as pd
 

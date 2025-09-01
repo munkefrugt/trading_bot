@@ -1,39 +1,15 @@
+# backtest.py
 from trend.trendcheck import trend_check
 from trade import Trade
-from get_data import fetch_btc_data, fetch_btc_weekly_data, extend_weekly_index
-from calc_indicators import compute_ema, compute_ichimoku, extend_index, compute_heikin_ashi
-from align_data_time import get_data_with_indicators_and_time_alignment
-from trend.trendcheck import trend_check
 from sell import sell_check
-from buy import buy_check 
+from buy import buy_check
 import pandas as pd
 import numpy as np
 
-
-def run_backtest():
-    data = get_data_with_indicators_and_time_alignment()
-
-    # Initialize columns for trend_check + consolidation
-    required_cols = [
-        'Uptrend', 'Trend_Buy_Zone',
-        'W_SenB_Future_flat_to_up_point', 'W_SenB_Trend_Dead',
-        'Real_uptrend_start', 'Real_uptrend_end', 'Searching_micro_trendline',
-        'Searching_macro_trendline', 'Start_of_Dead_Trendline',
-        'W_SenB_Consol_Start_SenB',
-        'W_SenB_Consol_Start_Price',
-        #'W_SenB_Consol_Window',
-    ]
-
-    for col in required_cols:
-        if col == 'W_SenB_Consol_Window':
-            if col not in data.columns:
-                data[col] = np.nan
-        else:
-            if col not in data.columns:
-                data[col] = False
-
-
-
+def run_backtest(data: pd.DataFrame):
+    """
+    Assumes `data` already has all required columns initialized in main().
+    """
     trades, buy_markers, sell_markers, open_trades = [], [], [], []
     cash_series, equity_series, equity_index = [], [], []
     cash = 10000  # Starting capital
@@ -51,9 +27,8 @@ def run_backtest():
         equity_index.append(current_date)
         cash_series.append(cash)
 
-        
         # === Trend Check ===
-        data = trend_check(data, i) 
+        data = trend_check(data, i)
 
         # === Buy Check only if Uptrend ===
         if data['Uptrend'].iloc[i]:
