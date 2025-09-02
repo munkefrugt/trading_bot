@@ -8,6 +8,8 @@ from trend.trend_check_line_search import check_macro_trendline, check_micro_tre
 from trend.senb_consolidation import mark_senb_edge
 from trend.macro_trendline import  build_macro_trendline_from_last_X
 from trend.regression_line import build_regression_from_last_adjusted_start
+from trend.flatness import calc_flatness_from_last_adjusted_start
+from trend.bb_squeeze import check_bb_squeeze
 
 def trend_check(data, i):
     """Check W_SenB trend conditions and update uptrend states in `data`."""
@@ -113,16 +115,44 @@ def trend_check(data, i):
                     )
 
 
-                    data = build_regression_from_last_adjusted_start(
+                    data, r_2 = build_regression_from_last_adjusted_start(
                         data,
                         current_index=i,
                         out_col="Regline_from_last_adjusted",
                         flag_col="W_SenB_Consol_Start_Price_Adjusted",
                         min_points=5,
                     )
-                    
-                # does w_tenkansen and the found regression baseline nearly "overlay"?
-                # if so its a really good sign. 
+                    print(r_2)
+                    # do i need it?
+                    flatness = calc_flatness_from_last_adjusted_start(
+                        data,
+                        current_index=i,
+                        y_col="D_Close",   # or "W_Tenkan_sen" if you want weekly Tenkan instead
+                        flag_col="W_SenB_Consol_Start_Price_Adjusted",
+                        min_points=5,
+                    )
+                    if flatness is not None:
+                        data.loc[current_date, "Flatness_ratio"] = flatness
+                        print("Flatness:", flatness)
+
+                    #check bb
+                    # in this window W_SenB_Consol_Start_Price_Adjusted to now. 
+                    # if there is a clear end of bouble to 2 parelell lines 
+                    # that line up with regresion line 
+
+                    # inside your weekly block
+                    w, bb_width, bb_pct = check_bb_squeeze(
+                        w,
+                        current_index=w_pos,
+                        lookback=52
+                    )
+                    if bb_width is not None:
+                        print(f"BB squeeze at {current_date}: width={bb_width:.4f}, pct={bb_pct:.2%}")
+
+
+                # evaluate regression line.
+                # if r_2 > 0.9:
+                #   do something.. like lets not aprove of this segment somehow. 
 
                 else:
                     data.at[current_date, 'Uptrend'] = prev_uptrend

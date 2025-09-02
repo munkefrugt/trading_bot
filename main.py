@@ -38,8 +38,11 @@ def main():
         'W_SenB_Consol_Start_Price',
         'W_SenB_Consol_Start_Price_Adjusted',
     ]
+    
     FLOAT_COLS = [
-        'Regline_from_last_adjusted',  # numeric regression line for plotting
+        'Regline_from_last_adjusted', 
+        'r_2_values_for_regline',
+        'Flatness_ratio'
     ]
 
     def ensure_columns(df: pd.DataFrame) -> pd.DataFrame:

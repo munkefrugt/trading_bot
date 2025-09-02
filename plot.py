@@ -107,34 +107,34 @@ def plot_price_with_indicators(
         opacity=0.8
     ), row=1, col=1)
 
-    # # === Weekly Bollinger Bands (20) ===
-    # if {'W_BB_Middle_20','W_BB_Upper_20','W_BB_Lower_20'}.issubset(config.weekly_bb.columns):
-    #     # Middle line
-    #     fig.add_trace(go.Scatter(
-    #         x=config.weekly_bb.index,
-    #         y=config.weekly_bb['W_BB_Middle_20'],
-    #         mode='lines',
-    #         name='W BB Middle (20)',
-    #         line=dict(color='gray', width=2, dash='dot')
-    #     ), row=1, col=1)
+    # === Weekly Bollinger Bands (20) ===
+    if {'W_BB_Middle_20','W_BB_Upper_20','W_BB_Lower_20'}.issubset(config.weekly_bb.columns):
+        # Middle line
+        fig.add_trace(go.Scatter(
+            x=config.weekly_bb.index,
+            y=config.weekly_bb['W_BB_Middle_20'],
+            mode='lines',
+            name='W BB Middle (20)',
+            line=dict(color='gray', width=2, dash='dot')
+        ), row=1, col=1)
 
-    #     # Upper band
-    #     fig.add_trace(go.Scatter(
-    #         x=config.weekly_bb.index,
-    #         y=config.weekly_bb['W_BB_Upper_20'],
-    #         mode='lines',
-    #         name='W BB Upper (20)',
-    #         line=dict(color='darkblue', width=1)
-    #     ), row=1, col=1)
+        # Upper band
+        fig.add_trace(go.Scatter(
+            x=config.weekly_bb.index,
+            y=config.weekly_bb['W_BB_Upper_20'],
+            mode='lines',
+            name='W BB Upper (20)',
+            line=dict(color='darkblue', width=1)
+        ), row=1, col=1)
 
-    #     # Lower band
-    #     fig.add_trace(go.Scatter(
-    #         x=config.weekly_bb.index,
-    #         y=config.weekly_bb['W_BB_Lower_20'],
-    #         mode='lines',
-    #         name='W BB Lower (20)',
-    #         line=dict(color='darkblue', width=1)
-    #     ), row=1, col=1)
+        # Lower band
+        fig.add_trace(go.Scatter(
+            x=config.weekly_bb.index,
+            y=config.weekly_bb['W_BB_Lower_20'],
+            mode='lines',
+            name='W BB Lower (20)',
+            line=dict(color='darkblue', width=1)
+        ), row=1, col=1)
 
 
 
@@ -479,18 +479,53 @@ def plot_price_with_indicators(
     
 
     # === Regression line from last adjusted start ===
-    col = 'Regline_from_last_adjusted'
+    col = "Regline_from_last_adjusted"
     if col in data.columns:
-        reg = pd.to_numeric(data[col], errors='coerce').dropna()
-        if not reg.empty:
+        reg = pd.to_numeric(data[col], errors="coerce")  # <- no dropna
+        if reg.notna().any():
             fig.add_trace(go.Scatter(
-                x=reg.index,        # <- like your macro code
-                y=reg,              # <- series directly
-                mode='lines',
-                name='Regression from last adjusted start',
-                line=dict(width=2, dash='dash'),
-                connectgaps=False   # don't bridge NaN gaps
+                x=reg.index,
+                y=reg,
+                mode="lines",
+                name="Regression from last adjusted start",
+                line=dict(color = "blue", width=2, dash="dash"),
+                connectgaps=False  # ensures NaN gaps are not bridged
             ), row=1, col=1)
+
+    # R² for the regression base line
+    col_r2 = "r_2_values_for_regline"
+    if {col_r2, "D_Close"} <= set(data.columns):
+        r2s = pd.to_numeric(data[col_r2], errors="coerce").dropna()
+        if not r2s.empty:
+            y_at_price = data.loc[r2s.index, "D_Close"]
+            fig.add_trace(go.Scatter(
+                x=r2s.index,
+                y=y_at_price.values,           # place labels at the price
+                mode="text",                   # text-only (no dots)
+                text=[f"R² {v:.2f}" for v in r2s.values],
+                textposition="top center",
+                name="Regline R²",
+                showlegend=False
+            ), row=1, col=1)
+    
+    # Flatness_ratio for the regression base line w_tenkan
+    col = "Flatness_ratio"
+    if {col, "D_Close"} <= set(data.columns):
+        vals = pd.to_numeric(data[col], errors="coerce").dropna()
+        if not vals.empty:
+            y_at_price = data.loc[vals.index, "D_Close"]
+            fig.add_trace(go.Scatter(
+                x=vals.index,
+                y=y_at_price.values,
+                mode="text",
+                text=[f"F {v:.3f}" for v in vals.values],  # label with flatness
+                textposition="bottom center",
+                name="Flatness ratio",
+                showlegend=False
+            ), row=1, col=1)
+
+
+
 
     # === Buy Markers ===
     if buy_signals:
@@ -543,16 +578,16 @@ def plot_price_with_indicators(
     #         line=dict(color='blue', width=2)
     #     ), row=1, col=1)
 
-    # # bb wwekly squeeze
-    # if 'W_BB_Squeeze' in data.columns:
-    #     fig.add_trace(go.Scatter(
-    #         x=data.index,
-    #         y=data['W_BB_Squeeze'],
-    #         mode='lines',
-    #         name='Weekly BB Squeeze',
-    #         line=dict(color='purple', width=2, dash='dash'),
-    #         visible='legendonly'
-    #     ), row=1, col=1)
+    # bb wwekly squeeze
+    if 'W_BB_Squeeze' in data.columns:
+        fig.add_trace(go.Scatter(
+            x=data.index,
+            y=data['W_BB_Squeeze'],
+            mode='lines',
+            name='Weekly BB Squeeze',
+            line=dict(color='purple', width=2, dash='dash'),
+            visible='legendonly'
+        ), row=1, col=1)
 
     # # === HMA Lines ===
     # if 'W_HMA_14' in config.weekly_HMA.columns:
