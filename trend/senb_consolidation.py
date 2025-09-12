@@ -61,7 +61,7 @@ def nearest_local_peak(series: pd.Series,
     else:
         return s.loc[candidates].idxmax()
 
-def mark_senb_edge(data: pd.DataFrame, current_date: pd.Timestamp | str) -> pd.DataFrame:
+def mark_consolidation_zone(data: pd.DataFrame, current_date: pd.Timestamp | str) -> pd.DataFrame:
     if not isinstance(current_date, pd.Timestamp):
         current_date = pd.to_datetime(current_date)
 
@@ -83,11 +83,11 @@ def mark_senb_edge(data: pd.DataFrame, current_date: pd.Timestamp | str) -> pd.D
         prev_senA = w_sen_A_fut.iloc[back_trace_pos - 1]
         prev_senB = w_sen_B_fut.iloc[back_trace_pos - 1]
 
-        if (prev_senB > prev_senA) and (cur_senB >= cur_senA):
-            start_pos = back_trace_pos
-            break
+        # if (prev_senB > prev_senA) and (cur_senB >= cur_senA):
+        #     start_pos = back_trace_pos
+        #     break
 
-        if w_sen_B_pct.iloc[back_trace_pos] > 1.0:
+        if abs(w_sen_B_pct.iloc[back_trace_pos]) > 2.0:
             start_pos = back_trace_pos
             break
 

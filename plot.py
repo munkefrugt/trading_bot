@@ -150,26 +150,58 @@ def plot_price_with_indicators(
     ), row=1, col=1)
 
 
-    # # === Daily EMA lines ===
-    # ema_config = [
-    #     ('EMA_9', 'red', 'EMA 9'),
-    #     ('EMA_20', 'orange', 'EMA 20'),
-    #     ('EMA_50', 'blue', 'EMA 50'),
-    #     ('EMA_100', 'purple', 'EMA 100'),
-    #     ('EMA_200', 'darkcyan', 'EMA 200'),
-    #     ('EMA_365', 'darkgreen', 'EMA 365')
+    # === Daily EMA lines ===
+    ema_config = [
+        ('EMA_9', 'red', 'EMA 9'),
+        ('EMA_20', 'orange', 'EMA 20'),
+        ('EMA_50', 'blue', 'EMA 50'),
+        ('EMA_100', 'purple', 'EMA 100'),
+        ('EMA_200', 'darkcyan', 'EMA 200'),
+        ('EMA_365', 'darkgreen', 'EMA 365'),
+        ('EMA_2y', 'brown', 'EMA 2y')
 
-    # ]
-    # for col, color, label in ema_config:
-    #     if col in data.columns:
-    #         fig.add_trace(go.Scatter(
-    #             x=data.index,
-    #             y=data[col],
-    #             mode='lines',
-    #             name=label,
-    #             line=dict(color=color, width=1),
-    #             visible='legendonly'
-    #         ), row=1, col=1)
+    ]
+    for col, color, label in ema_config:
+        if col in data.columns:
+            fig.add_trace(go.Scatter(
+                x=data.index,
+                y=data[col],
+                mode='lines',
+                name=label,
+                line=dict(color=color, width=1),
+                visible=True if col == 'EMA_2y' else 'legendonly'
+            ), row=1, col=1)
+
+    # === Daily EMA slope % (row=2) ===
+    ema_slope_config = [
+        ('EMA_9_slope_%', 'red', 'EMA 9 slope%'),
+        ('EMA_20_slope_%', 'orange', 'EMA 20 slope%'),
+        ('EMA_50_slope_%', 'blue', 'EMA 50 slope%'),
+        ('EMA_100_slope_%', 'purple', 'EMA 100 slope%'),
+        ('EMA_200_slope_%', 'darkcyan', 'EMA 200 slope%'),
+        ('EMA_365_slope_%', 'darkgreen', 'EMA 365 slope%'),
+        ('EMA_2y_slope_%', 'darkgreen', 'EMA 2y slope%'),
+
+    ]
+
+    for col, color, label in ema_slope_config:
+        if col in data.columns:
+            fig.add_trace(go.Scatter(
+                x=data.index,
+                y=data[col],
+                mode='lines',
+                name=label,
+                line=dict(color=color, width=1),
+                hovertemplate='%{y:.2f}%<extra>' + label + '</extra>',
+                visible=True if col == 'EMA_2y_slope_%' else 'legendonly'
+            ), row=2, col=1)
+
+    fig.update_yaxes(title_text="EMA slope %", ticksuffix="%", zeroline=True, zerolinewidth=1, row=2, col=1)
+    try:
+        fig.add_hline(y=0, line_dash='dot', line_width=1, opacity=0.4, row=2, col=1)
+    except Exception:
+        pass
+
 
     # === Donchian Channel yearly===
     if 'DC_Upper_365' in data.columns:
@@ -384,6 +416,34 @@ def plot_price_with_indicators(
             opacity=0.8
         ), row=2, col=1)  # slope makes sense in 2nd subplot
 
+    # === "real time" Weekly Senkou Span B (trailing poly fit, causal) ===
+    if 'W_SenB_trailing_poly' in config.ichimoku_weekly.columns:
+        fig.add_trace(go.Scatter(
+            x=config.ichimoku_weekly.index,
+            y=config.ichimoku_weekly['W_SenB_trailing_poly'],
+            mode='lines',
+            name='W SenB (trailing poly)',
+            line=dict(color='purple', width=3, dash='solid'),
+            opacity=0.9
+        ), row=1, col=1)
+
+    # === Slope of Weekly Senkou Span B (trailing poly, %/week) ===
+    slope_col = "W_SenB_trailing_slope_pct"  # change if you named it differently
+    if slope_col in config.ichimoku_weekly.columns:
+        fig.add_trace(go.Scatter(
+            x=config.ichimoku_weekly.index,
+            y=config.ichimoku_weekly[slope_col],
+            mode='lines',
+            name='Slope of W SenB (relative %/week)',
+            line=dict(color='blue', width=1, dash='dot'),
+            opacity=0.8
+        ), row=2, col=1)
+
+        # optional reference lines
+        fig.add_hline(y=1.0, line_dash="dash", line_width=1, line_color="black", row=2, col=1)  # your threshold
+        fig.add_hline(y=0.0, line_dash="dot",  line_width=1, line_color="gray",  row=2, col=1)  # zero-line
+
+
     # === Plot Trendline_from_top (X) if it exists ===
     if 'Trendline_from_X' in data.columns:
         fig.add_trace(go.Scatter(
@@ -418,6 +478,17 @@ def plot_price_with_indicators(
     #             connectgaps=False
     #         ), row=1, col=1)
 
+    #=== Weekly ATR ===
+    if hasattr(config, "weekly_ATR"):
+        for col in config.weekly_ATR.columns:
+            fig.add_trace(go.Scatter(
+                x=config.weekly_ATR.index,
+                y=config.weekly_ATR[col],
+                mode="lines",
+                name=col.replace("W_", ""),   # cleaner legend name
+                line=dict(width=1),
+                visible=True
+            ), row=3, col=1)
 
 
     # === Trend Channel Lines ===
@@ -465,6 +536,17 @@ def plot_price_with_indicators(
                 marker=dict(color='darkblue', size=14, symbol='x')
             ), row=1, col=1)
 
+    if 'W_SenB_Consol_start_Adj_jump_6_months' in data.columns:
+        adjusted_price_points = data[data['W_SenB_Consol_start_Adj_jump_6_months']]
+        if not adjusted_price_points.empty:
+            fig.add_trace(go.Scatter(
+                x=adjusted_price_points.index,
+                y=adjusted_price_points['D_Close'], 
+                mode='markers',
+                name='Consol jump(Adjusted)',
+                marker=dict(color='green', size=14, symbol='x')
+            ), row=1, col=1)
+    
     if 'W_SenB_Consol_Start_Price_Adjusted' in data.columns:
         adjusted_price_points = data[data['W_SenB_Consol_Start_Price_Adjusted']]
         if not adjusted_price_points.empty:
@@ -475,7 +557,6 @@ def plot_price_with_indicators(
                 name='SenB Consol Start Price (Adjusted)',
                 marker=dict(color='red', size=14, symbol='x')
             ), row=1, col=1)
-    
     
 
     # === Regression line from last adjusted start ===
@@ -505,8 +586,10 @@ def plot_price_with_indicators(
                 text=[f"R² {v:.2f}" for v in r2s.values],
                 textposition="top center",
                 name="Regline R²",
-                showlegend=False
+                showlegend=True,
+                visible='legendonly'
             ), row=1, col=1)
+        
     
     # Flatness_ratio for the regression base line w_tenkan
     col = "Flatness_ratio"
@@ -521,7 +604,56 @@ def plot_price_with_indicators(
                 text=[f"F {v:.3f}" for v in vals.values],  # label with flatness
                 textposition="bottom center",
                 name="Flatness ratio",
-                showlegend=False
+                showlegend=True,
+                visible='legendonly'
+            ), row=1, col=1)
+
+    # --- Cross count annotations ---
+    col_cross = "regline_crosses"
+    if {col_cross, "D_Close"} <= set(data.columns):
+        crosses = pd.to_numeric(data[col_cross], errors="coerce").dropna()
+        if not crosses.empty:
+            y_at_price = data.loc[crosses.index, "D_Close"]
+            fig.add_trace(go.Scatter(
+                x=crosses.index,
+                y=y_at_price.values,
+                mode="text",
+                text=[f"{int(v)}" for v in crosses.values],
+                textposition="bottom center",
+                name="Regline crosses",
+                showlegend=True
+            ), row=1, col=1)
+    
+
+    # --- Approved gold star markers (as scatter points) ---
+    col_appr = "regline_aproved"
+    if {col_appr, "D_Close"} <= set(data.columns):
+        stars = data.loc[data[col_appr] == True, "D_Close"]
+        if not stars.empty:
+            fig.add_trace(go.Scatter(
+                x=stars.index,
+                y=stars.values,
+                mode="markers",
+                marker=dict(symbol="star", color="gold", size=14, line=dict(width=1, color="black")),
+                name="Regline approved",
+                showlegend=True
+            ), row=1, col=1)
+
+    # --- Regline cross markers (green dots) ---
+    col_cross = "Regline_cross_event"
+    col_reg = "Regline_from_last_adjusted"
+    if {col_cross, col_reg} <= set(data.columns):
+        mask = data[col_cross].fillna(False)
+        if mask.any():
+            xs = data.index[mask]
+            ys = data.loc[mask, col_reg]
+            fig.add_trace(go.Scatter(
+                x=xs,
+                y=ys.values,                     # put dots ON the regline
+                mode="markers",
+                marker=dict(symbol="circle", color="green", size=8, line=dict(width=0)),
+                name="Regline cross",
+                showlegend=True,
             ), row=1, col=1)
 
 

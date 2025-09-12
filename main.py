@@ -1,11 +1,10 @@
-# main.py
 import numpy as np
 import pandas as pd
 import config
 from backtest import run_backtest
 from plot import plot_price_with_indicators
 from metrics import analyze_performance, print_return_distribution, print_trade_results
-from calc_indicators import compute_heikin_ashi, compute_ichimoku, compute_bollinger_bands, compute_HMA
+from calc_indicators import compute_heikin_ashi, compute_ichimoku, compute_bollinger_bands, compute_HMA, compute_ATR
 from get_data import extend_weekly_index, fetch_btc_weekly_data, fetch_btc_data
 from identify_bb_squeeze import identify_bb_squeeze_percentile
 from align_data_time import get_data_with_indicators_and_time_alignment
@@ -24,6 +23,8 @@ def main():
 
     config.weekly_HMA = compute_HMA(weekly_data, periods=[14, 25, 50, 100], prefix="W_")
 
+    config.weekly_ATR = compute_ATR(weekly_data, periods=[14, 25, 50, 100], prefix="W_")
+
     # --- Daily data + indicators aligned with weekly ---
     data = get_data_with_indicators_and_time_alignment()
 
@@ -37,12 +38,18 @@ def main():
         'W_SenB_Consol_Start_SenB',
         'W_SenB_Consol_Start_Price',
         'W_SenB_Consol_Start_Price_Adjusted',
+        'W_SenB_Consol_start_Adj_jump_6_months',
+        'regline_aproved',
+        'Regline_cross_event'
     ]
-    
     FLOAT_COLS = [
-        'Regline_from_last_adjusted', 
+        'Regline_from_last_adjusted',
         'r_2_values_for_regline',
-        'Flatness_ratio'
+        'Flatness_ratio',
+        'regline_crosses',
+        'W_SenB_trailing_poly',
+        'W_SenB_trailing_slope_pct',
+        
     ]
 
     def ensure_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -58,9 +65,18 @@ def main():
                 df[col] = pd.to_numeric(df[col], errors='coerce')
         return df
 
+    # --- One-time reset of derived columns (avoid stale state) ---
+    for c in ["Regline_from_last_adjusted", "regline_crosses", "regline_aproved", "r_2_values_for_regline"]:
+        if c in data.columns:
+            data[c] = (False if c == "regline_aproved" else np.nan)
+
+    # If your consolidation flag is recomputed during the run and might have stale Trues from a prior session, uncomment:
+    # if "W_SenB_Consol_Start_Price_Adjusted" in data.columns:
+    #     data["W_SenB_Consol_Start_Price_Adjusted"] = False
+
     data = ensure_columns(data)
 
-    # --- Run backtest on prepared data ---
+    # --- Run backtest ---
     data, buys, sells, trades, equity, cash = run_backtest(data)
     print(f"{len(buys)} buy signals, {len(sells)} sell signals")
 
@@ -72,7 +88,7 @@ def main():
         trades=trades,
         equity_curve=equity,
         cash_series=cash,
-        weekly_data_HA=weekly_data_HA
+        weekly_data_HA=weekly_data_HA,
     )
 
     # --- Metrics ---

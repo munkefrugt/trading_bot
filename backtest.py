@@ -1,10 +1,11 @@
 # backtest.py
-from trend.trendcheck import trend_check
+from trend.trend_check import trend_check
 from trade import Trade
 from sell import sell_check
 from buy import buy_check
 import pandas as pd
 import numpy as np
+from signals.core import get_signals
 
 def run_backtest(data: pd.DataFrame):
     """
@@ -27,11 +28,11 @@ def run_backtest(data: pd.DataFrame):
         equity_index.append(current_date)
         cash_series.append(cash)
 
-        # === Trend Check ===
-        data = trend_check(data, i)
-
+ 
         # === Buy Check only if Uptrend ===
-        if data['Uptrend'].iloc[i]:
+        #if data['Uptrend'].iloc[i]:
+        if  get_signals(data,i):
+            print(f"🚀 Buy trigger (Gold Star) at {data.index[i].date()}")
             open_trades, cash, buy_markers, trades, data = buy_check(
                 open_trades=open_trades,
                 data=data,

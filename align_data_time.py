@@ -24,7 +24,15 @@ def get_data_with_indicators_and_time_alignment():
     data['EMA_100'] = compute_ema(data, 100)
     data['EMA_200'] = compute_ema(data, 200)
     data['EMA_365'] = compute_ema(data, 365)
+    data['EMA_2y'] = compute_ema(data, 365*2)
 
+    # --- NEW: relative EMA slopes (percent over a lookback window) ---
+    # Uses (EMA_now - EMA_past) / EMA_past * 100 over N days (default 28 ~ 4 weeks)
+    slope_window = getattr(config, "EMA_SLOPE_WINDOW_DAYS", 28)
+    for p in (9, 20, 50, 100, 200, 365, "2y"):
+        col = f'EMA_{p}'
+        if col in data.columns:
+            data[f'{col}_slope_%'] = (data[col] - data[col].shift(slope_window)) / data[col].shift(slope_window) * 100
 
     # Add Bollinger Bands (Daily)
     bb_daily = compute_bollinger_bands(data, period=20, std_dev=2, prefix="D_")
@@ -38,16 +46,13 @@ def get_data_with_indicators_and_time_alignment():
     data['DC_Lower_365'] = data['D_Low'].rolling(window=period).min()
     data['DC_Middle_365'] = (data['DC_Upper_365'] + data['DC_Lower_365']) / 2
 
-
     data['DC_Upper_26'] = data['D_High'].rolling(window=26).max()
     data['DC_Lower_26'] = data['D_Low'].rolling(window=26).min()
     data['DC_Middle_26'] = (data['DC_Upper_26'] + data['DC_Lower_26']) / 2
 
-
     # Extend daily index by 182 days (26 weeks) for future Ichimoku cloud
     future_days = 26 * 7
     data = extend_index(data, future_days=future_days)
-
 
     # --- Heikin-Ashi (weekly) ---
     ha_weekly = compute_heikin_ashi(weekly_raw, weekly=True)
@@ -56,7 +61,7 @@ def get_data_with_indicators_and_time_alignment():
     # Fill missing weekly values with forward fill
     weekly_daily = weekly_raw.reindex(data.index, method='ffill')
 
-    data = pd.concat([data, ha_weekly_daily,weekly_daily], axis=1)
+    data = pd.concat([data, ha_weekly_daily, weekly_daily], axis=1)
 
     # --- Weekly Ichimoku ---
     weekly_extended = extend_weekly_index(weekly_raw)
@@ -99,6 +104,5 @@ def get_data_with_indicators_and_time_alignment():
     # --- Daily Ichimoku ---
     ichimoku_daily = compute_ichimoku(data)
     data = pd.concat([data, ichimoku_daily], axis=1)
-
 
     return data

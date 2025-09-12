@@ -149,3 +149,43 @@ def compute_HMA(data, periods, prefix="D_"):
         hma[f'{prefix}HMA_{period}'] = WMA(2 * wma_half - wma_full, sqrt_length)
 
     return hma
+
+def compute_ATR(data, periods=[14], prefix="D_", weekly=False, wilder=True):
+    """
+    Compute ATR as relative volatility (ATR / Close).
+
+    Parameters:
+    - data: DataFrame with OHLC columns
+    - periods: int or list of ints
+    - prefix: e.g. "D_" or "W_"
+    - weekly: force prefix to "W_"
+    - wilder: use Wilder's smoothing if True
+
+    Returns:
+    - DataFrame with ATR columns (relative values, like %)
+    """
+    if weekly:
+        prefix = "W_"
+    if isinstance(periods, int):
+        periods = [periods]
+
+    high = data[f'{prefix}High'].astype(float)
+    low = data[f'{prefix}Low'].astype(float)
+    close = data[f'{prefix}Close'].astype(float)
+
+    prev_close = close.shift(1)
+    tr = pd.concat([
+        (high - low).abs(),
+        (high - prev_close).abs(),
+        (low - prev_close).abs()
+    ], axis=1).max(axis=1)
+
+    out = pd.DataFrame(index=data.index)
+    for p in periods:
+        raw_atr = (
+            tr.ewm(alpha=1.0/p, adjust=False).mean()
+            if wilder else tr.rolling(p, min_periods=p).mean()
+        )
+        out[f'{prefix}ATR_{p}'] = 100.0 * raw_atr / close  # relative ATR (%)
+    return out
+
