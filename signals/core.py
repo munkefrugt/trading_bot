@@ -1,97 +1,70 @@
 # signals/core.py
-import pandas as pd
 from typing import Callable, List, Tuple
-import math
+import pandas as pd
 
-# === Test lamps (only these two for now) ===
 from .ema50_over_200 import ema50_over_200
 from .ema200_over_2y import ema200_over_2y
+from .senb_w_future_flat_base import senb_w_future_flat_base
+from .senb_w_future_slope_pct import senb_w_future_slope_pct
+Signal = Tuple[str, Callable[[pd.DataFrame, int], bool], int]
 
-# from .senb_up_after_flat import senb_up_after_flat_base
-# from .bb_up_from_flat import bb_up_from_flat
-# from .chikou_free import chikou_free
-# from .clear_trendline_breakout import clear_trendline_breakout
+SIGNAL_ORDER: List[Signal] = [
+    #("ema50_over_200", ema50_over_200, 90),
+    #("ema200_over_2y", ema200_over_2y, 60),
+    ("senb_w_future_flat_base", senb_w_future_flat_base, 7*8),
+    ("senb_w_future_slope_pct", senb_w_future_slope_pct, 7*8),
 
-Lamp = Tuple[str, Callable[[pd.DataFrame, int], bool], int]  # (name, fn, ttl_bars)
 
-# TTLs let a lamp "wait" for the next one
-LAMP_ORDER: List[Lamp] = [
-    ("Lamp1_EMA50_over_200", ema50_over_200, 30),  # ~1.5 months (daily)
-    ("Lamp2_EMA200_over_2y", ema200_over_2y, 60),  # ~3 months
-    # ("Lamp3_SenB_up_after_flat", senb_up_after_flat_base, 60),
-    # ("Lamp4_BB_up_from_flat",    bb_up_from_flat,          20),
-    # ("Lamp5_Chikou_free",        chikou_free,              40),
-    # ("Lamp6_Clear_TL_breakout",  clear_trendline_breakout, 10),
 ]
 
-def _col_valid_until(name: str) -> str:
-    return f"{name}_valid_until_i"
+# in-memory TTL state
+_valid_until: List[int] = []  # i-index (inclusive) until active
 
-def _col_active(name: str) -> str:
-    return f"{name}_active"
+def reset_signal_state():
+    global _valid_until 
+    _valid_until = [-1] * len(SIGNAL_ORDER)
 
-def _get_prev_valid_until(data: pd.DataFrame, i: int, name: str) -> int:
-    if i <= 0:
-        return -1
-    col = _col_valid_until(name)
-    if col in data.columns:
-        val = data.iloc[i-1].get(col)
-        if isinstance(val, (int, float)) and not math.isnan(val):
-            return int(val)
-    return -1
-
-def _set_row(data: pd.DataFrame, i: int, col: str, val):
-    data.at[data.index[i], col] = val
-
-def _activate(data: pd.DataFrame, i: int, name: str, valid_until_i: int):
-    _set_row(data, i, _col_active(name), True)
-    _set_row(data, i, _col_valid_until(name), int(valid_until_i))
-
-def _deactivate(data: pd.DataFrame, i: int, name: str, prev_valid_until_i: int):
-    _set_row(data, i, _col_active(name), False)
-    if prev_valid_until_i >= 0:
-        _set_row(data, i, _col_valid_until(name), int(prev_valid_until_i))
+def _ensure_state_size():
+    global _valid_until
+    n = len(SIGNAL_ORDER)
+    if len(_valid_until) < n:
+        _valid_until.extend([-1] * (n - len(_valid_until)))
+    elif len(_valid_until) > n:
+        _valid_until = _valid_until[:n]
 
 def get_signals(data: pd.DataFrame, i: int) -> bool:
-    """
-    Ordered, stateful lamp pipeline with TTL.
-    Returns True only if all lamps are active at index i.
-    Writes per-lamp <name>_active, <name>_valid_until_i, and final Gold_Star.
-    Also prints when Gold_Star transitions from False -> True.
-    """
     if i <= 0 or i >= len(data):
         return False
 
-    # previous gold state (for transition print)
-    prev_gold = False
-    if "Gold_Star" in data.columns and i > 0:
-        prev_val = data.iloc[i-1].get("Gold_Star")
-        prev_gold = bool(prev_val) if pd.notna(prev_val) else False
+    _ensure_state_size()
+
+    prev_all = bool(data.iloc[i-1].get("all_signals_on")) if ("all_signals_on" in data.columns and i > 0 and pd.notna(data.iloc[i-1].get("all_signals_on"))) else False
 
     all_on = True
-
-    for (name, fn, ttl_bars) in LAMP_ORDER:
-        prev_valid_until = _get_prev_valid_until(data, i, name)
+    for signal_idx, (name, fn, ttl_bars) in enumerate(SIGNAL_ORDER, start=1):
+        col = name  
 
         if not all_on:
-            _deactivate(data, i, name, prev_valid_until)
+            data.at[data.index[i], col] = False
             continue
 
         fired_now = bool(fn(data, i))
         if fired_now:
-            valid_until = i + max(0, int(ttl_bars))
-            _activate(data, i, name, valid_until)
+            _valid_until[signal_idx - 1] = i + max(0, int(ttl_bars))
+            active = True
         else:
-            if i <= prev_valid_until:
-                _activate(data, i, name, prev_valid_until)
-            else:
-                _deactivate(data, i, name, prev_valid_until)
-                all_on = False  # stop chain
+            active = (i <= _valid_until[signal_idx - 1])
+        #store state
+        data.at[data.index[i], col] = active
+        if not active:
+            all_on = False
 
-    _set_row(data, i, "Gold_Star", all_on)
+    data.at[data.index[i], "all_signals_on"] = all_on
 
-    # print only on False -> True transition
-    if all_on and not prev_gold:
-        print(f"🌟 GOLD STAR formed at {data.index[i].date()}")
+    if all_on and not prev_all:
+        try:
+            print(f"🌟 GOLD STAR formed at {data.index[i].date()}")
+        except Exception:
+            pass
 
     return all_on

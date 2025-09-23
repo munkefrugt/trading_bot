@@ -40,7 +40,15 @@ def main():
         'W_SenB_Consol_Start_Price_Adjusted',
         'W_SenB_Consol_start_Adj_jump_6_months',
         'regline_aproved',
-        'Regline_cross_event'
+        'Regline_cross_event', 
+        #signal columns:
+        'senb_w_future_flat_base',
+        'senb_w_future_slope_pct',
+
+        'all_signals_on',
+        #signal helpers: 
+        'W_SenB_Future_slope_ok_point',
+
     ]
     FLOAT_COLS = [
         'Regline_from_last_adjusted',
@@ -49,6 +57,7 @@ def main():
         'regline_crosses',
         'W_SenB_trailing_poly',
         'W_SenB_trailing_slope_pct',
+        'W_SenB_base_val',
         
     ]
 
@@ -96,5 +105,6 @@ def main():
     analyze_performance(trades)
     print_return_distribution(trades)
 
+    df_slope = config.ichimoku_weekly["W_Senkou_span_B_slope_pct"]
 if __name__ == "__main__":
     main()

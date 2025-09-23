@@ -320,18 +320,6 @@ def plot_price_with_indicators(
                 line=dict(color=color, width=3, dash='dot')
             ), row=1, col=1)
     
-    # === W_SenB_Future_flat_to_up_point ===
-    if 'W_SenB_Future_flat_to_up_point' in data.columns:
-        future_senb_points = data[data['W_SenB_Future_flat_to_up_point']]
-        fig.add_trace(go.Scatter(
-            x=future_senb_points.index,
-            y=future_senb_points['W_Senkou_span_B'],  # mark at SenB future value
-            mode='markers',
-            name='SenB Future falt -> Rising',
-            marker=dict(color='cyan', size=14, symbol='star')
-        ), row=1, col=1)
-
-
     
         # === SenB Trend Dead (Future Black Star) ===
     if 'W_SenB_Trend_Dead' in data.columns:
@@ -720,6 +708,102 @@ def plot_price_with_indicators(
             line=dict(color='purple', width=2, dash='dash'),
             visible='legendonly'
         ), row=1, col=1)
+
+    # *****************************START OF TTL SIGNALS *****************************
+
+    # ================ SIGNALS TIME TO LIVE (TTL) see signals/core.py ==============
+    # next block relevant helper signals
+
+    # --- Signal: senb_w_future_slope_pct (plot on daily price ---
+    if "senb_w_future_flat_base" in data.columns and "D_Close" in data.columns:
+        mask = data["senb_w_future_flat_base"].fillna(False).infer_objects(copy=False).astype(bool)
+        if mask.any():
+            y = pd.Series(index=data.index, dtype="float64")
+            y.loc[mask] = data.loc[mask, "D_Close"]
+            fig.add_trace(go.Scatter(
+                x=data.index,
+                y=y,
+                mode="lines",
+                name="senb_w_future_flat_base",
+                line=dict(color="purple", width=5),
+                connectgaps=False,
+                hovertemplate="senb_w_future_flat_base<br>%{x}<br>SENB_W: %{y:.2f}<extra></extra>",
+            ), row=1, col=1)
+
+    if "senb_w_future_slope_pct" in data.columns and "D_Close" in data.columns:
+        mask = data["senb_w_future_slope_pct"].fillna(False).infer_objects(copy=False).astype(bool)
+        if mask.any():
+            y = pd.Series(index=data.index, dtype="float64")
+            y.loc[mask] = data.loc[mask, "D_Close"]
+            fig.add_trace(go.Scatter(
+                x=data.index,
+                y=y,
+                mode="lines",
+                name="senb_w_future_slope_pct",
+                line=dict(color="green", width=5),
+                connectgaps=False,
+                hovertemplate="senb_w_future_slope_pct<br>%{x}<br>SENB_W: %{y:.2f}<extra></extra>",
+            ), row=1, col=1)
+
+    # --- All signals ON: gold star at price ---
+    if "all_signals_on" in data.columns and "D_Close" in data.columns:
+        mask = data["all_signals_on"].fillna(False).astype(bool)
+
+        if mask.any():
+            # keep only first True after a False (rising edge)
+            rising_edges = mask & (~mask.shift(fill_value=False))
+
+            xs = data.index[rising_edges]
+            ys = data.loc[rising_edges, "D_Close"]
+
+            fig.add_trace(go.Scatter(
+                x=xs,
+                y=ys,
+                mode="markers",
+                name="All signals ON",
+                marker=dict(symbol="star", size=18, color="gold", line=dict(width=1, color="black")),
+            ), row=1, col=1)
+
+    # *****************************END OF TTL SIGNALS *****************************
+    # ===== helper signals markers ======== #
+    # === W_SenB_Future_flat_to_up_point ===
+    if 'W_SenB_Future_flat_to_up_point' in data.columns:
+        future_senb_points = data[data['W_SenB_Future_flat_to_up_point']]
+        fig.add_trace(go.Scatter(
+            x=future_senb_points.index,
+            y=future_senb_points['W_Senkou_span_B'],  # mark at SenB future value
+            mode='markers',
+            name='SenB Future falt -> Rising',
+            marker=dict(color='cyan', size=14, symbol='star')
+        ), row=1, col=1)
+
+        # === W_SenB_base_val ===
+    if 'W_SenB_base_val' in data.columns:
+        base_points = data[~data['W_SenB_base_val'].isna()]
+        fig.add_trace(go.Scatter(
+            x=base_points.index,
+            y=base_points['W_SenB_base_val'],
+            mode='markers',
+            name='SenB Flat Base Anchor',
+            marker=dict(color='orange', size=12, symbol='diamond')
+        ), row=1, col=1)
+
+
+    if 'W_SenB_Future_slope_ok_point' in data.columns:
+        future_senb_points = data[data['W_SenB_Future_slope_ok_point']]
+        fig.add_trace(go.Scatter(
+            x=future_senb_points.index,
+            y=future_senb_points['W_Senkou_span_B'],  # mark at SenB future value
+            mode='markers',
+            name='SenB Future -> rise %',
+            marker=dict(color='green', size=14, symbol='star')
+        ), row=1, col=1)
+
+
+    # === END of helper signals ===
+  
+
+
 
     # # === HMA Lines ===
     # if 'W_HMA_14' in config.weekly_HMA.columns:

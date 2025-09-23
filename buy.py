@@ -1,55 +1,45 @@
 # buy.py
-import pandas as pd
-import config
 from trade import Trade
 
-
 def buy_check(open_trades, data, i, cash, buy_markers, equity, trades):
-
     current_date = data.index[i]
     close = float(data["D_Close"].iloc[i])
 
-    # --- Weekly event (build mask & mark first daily of each event) ---
-    w = config.ichimoku_weekly
+    # One position at a time (keep your current rule)
+    if len(open_trades) > 0:
+        return open_trades, cash, buy_markers, trades, data
 
-    # --- Daily Ichimoku (future cloud + stop source) ---
-    D_sen_A_future = float(data["D_Senkou_span_A_future"].iloc[i])
-    D_sen_B_future = float(data["D_Senkou_span_B_future"].iloc[i])
-    D_future_cloud_green = D_sen_A_future > D_sen_B_future
-    D_kijun = float(data["D_Kijun_sen"].iloc[i])
+    # --- 5% stop below close ---
+    stoploss_price = close * 0.95
+    risk_per_unit = close - stoploss_price  # = 0.05 * close
 
-    # --- Donchian filters ---
-    DC_26_prev = float(data["DC_Upper_26"].iloc[i - 1]) if i > 0 else float(data["DC_Upper_26"].iloc[i])
-    above_DC_26_line = close > DC_26_prev
-    above_DC_year_line = (close > float(data["DC_Upper_365"].iloc[i - 1])) if i > 0 else False
+    if risk_per_unit <= 0:
+        return open_trades, cash, buy_markers, trades, data
 
-    buy_signal = (
-        (len(open_trades) == 0)
-        and D_future_cloud_green
-        and above_DC_26_line
-        and above_DC_year_line
+    # --- 2% equity risk, allow FRACTIONS; cap by available cash ---
+    max_risk = 0.02 * equity
+    raw_qty = max_risk / risk_per_unit                # target size by risk
+    cash_cap_qty = cash / close                       # fractional sizing
+    quantity = min(raw_qty, cash_cap_qty)
+
+    if quantity <= 0:
+        return open_trades, cash, buy_markers, trades, data
+
+    cost = quantity * close
+
+    print(f"✅ BUY [{current_date}] @ {close:.2f} qty={quantity:.6f} "
+          f"stop={stoploss_price:.2f} (risk/unit={risk_per_unit:.4f})")
+
+    trade = Trade(
+        entry_date=current_date,
+        entry_price=close,
+        quantity=quantity,
+        stoploss=float(stoploss_price),
+        entry_equity=equity,
     )
-
-    if buy_signal:
-        stoploss_price = D_kijun
-        risk_per_unit = close - stoploss_price
-        if risk_per_unit > 0:
-            max_risk = 0.02 * equity  # 2% risk per trade
-            quantity = max_risk / risk_per_unit
-            cost = quantity * close
-
-            if cash >= cost:
-                print(f"✅ BUY [{current_date}] @ {close:.2f} (W_SenB flat→rise + EMA staircase)")
-                trade = Trade(
-                    entry_date=current_date,
-                    entry_price=close,
-                    quantity=quantity,
-                    stoploss=float(stoploss_price),
-                    entry_equity=equity,
-                )
-                trades.append(trade)
-                open_trades.append(trade)
-                buy_markers.append((current_date, close))
-                cash -= cost
+    trades.append(trade)
+    open_trades.append(trade)
+    buy_markers.append((current_date, close))
+    cash -= cost
 
     return open_trades, cash, buy_markers, trades, data
