@@ -70,7 +70,7 @@ def sell_check(open_trades, data, i, cash, sell_markers):
             #(close_under_kijun_2_days or D_sen_A_future < D_sen_B_future)
 
         ):
-            print(f"⛔ SELL triggered on {current_date.date()} (close cross below EMA50)")
+            #print(f"⛔ SELL triggered on {current_date.date()} (close cross below EMA50)")
             trade.close(exit_date=current_date, exit_price=close)
             cash += trade.exit_price * trade.quantity
             sell_markers.append((current_date, close))

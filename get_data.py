@@ -34,6 +34,13 @@ Great for stress-testing stop-loss and position sizing logic.
 
     PEPE-USD (or similar) – extreme pump-and-dump profiles.
 """
+
+"""
+NVDA
+AMD
+TSLA
+META
+"""
 #YYYY-MM-DD
 start = "2015-01-01"
 end = datetime.today().strftime("%Y-%m-%d")

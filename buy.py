@@ -27,8 +27,8 @@ def buy_check(open_trades, data, i, cash, buy_markers, equity, trades):
 
     cost = quantity * close
 
-    print(f"✅ BUY [{current_date}] @ {close:.2f} qty={quantity:.6f} "
-          f"stop={stoploss_price:.2f} (risk/unit={risk_per_unit:.4f})")
+    #print(f"✅ BUY [{current_date}] @ {close:.2f} qty={quantity:.6f} "
+    #      f"stop={stoploss_price:.2f} (risk/unit={risk_per_unit:.4f})")
 
     trade = Trade(
         entry_date=current_date,

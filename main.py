@@ -44,10 +44,13 @@ def main():
         #signal columns:
         'senb_w_future_flat_base',
         'senb_w_future_slope_pct',
+        'chikou_free',
+        'gold_star'
 
         'all_signals_on',
         #signal helpers: 
         'W_SenB_Future_slope_ok_point',
+        'chikou_free_check_origin',
 
     ]
     FLOAT_COLS = [
@@ -58,6 +61,15 @@ def main():
         'W_SenB_trailing_poly',
         'W_SenB_trailing_slope_pct',
         'W_SenB_base_val',
+        #####trendline columns #####
+        'trendln_breakout',
+        'trendln_top',
+        'trendln_bottom',
+        'trendln_mid',
+        'trendln_resist2',
+        'trendln_breakdown',
+        #####trendline columns #####
+
         
     ]
 

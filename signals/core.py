@@ -1,70 +1,102 @@
 # signals/core.py
-from typing import Callable, List, Tuple
 import pandas as pd
 
-from .ema50_over_200 import ema50_over_200
-from .ema200_over_2y import ema200_over_2y
 from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
-Signal = Tuple[str, Callable[[pd.DataFrame, int], bool], int]
+from .trendline_crossings import trendline_crossings
+# from .chikou_free import chikou_free
 
-SIGNAL_ORDER: List[Signal] = [
-    #("ema50_over_200", ema50_over_200, 90),
-    #("ema200_over_2y", ema200_over_2y, 60),
-    ("senb_w_future_flat_base", senb_w_future_flat_base, 7*8),
-    ("senb_w_future_slope_pct", senb_w_future_slope_pct, 7*8),
+months = 14
 
-
+# define signals in a readable way
+SIGNAL_ORDER = [
+    {"name": "senb_w_future_flat_base", "fn": senb_w_future_flat_base, "ttl": 7*4*months},
+    {"name": "senb_w_future_slope_pct", "fn": senb_w_future_slope_pct, "ttl": 7*4*months},
+    {"name": "trendline_crossings", "fn": trendline_crossings, "ttl": 7*4*months},
+    # {"name": "chikou_free", "fn": chikou_free, "ttl": 7*4*months},
 ]
 
-# in-memory TTL state
-_valid_until: List[int] = []  # i-index (inclusive) until active
 
-def reset_signal_state():
-    global _valid_until 
-    _valid_until = [-1] * len(SIGNAL_ORDER)
+def _ensure_state_cols(data: pd.DataFrame):
+    """Make sure TTL and state columns exist in the DataFrame."""
+    for sig in SIGNAL_ORDER:
+        if sig["name"] not in data.columns:
+            data[sig["name"]] = False
+        ttl_col = f"{sig['name']}__ttl"
+        if ttl_col not in data.columns:
+            data[ttl_col] = -1
+    if "all_signals_on" not in data.columns:
+        data["all_signals_on"] = False
 
-def _ensure_state_size():
-    global _valid_until
-    n = len(SIGNAL_ORDER)
-    if len(_valid_until) < n:
-        _valid_until.extend([-1] * (n - len(_valid_until)))
-    elif len(_valid_until) > n:
-        _valid_until = _valid_until[:n]
 
 def get_signals(data: pd.DataFrame, i: int) -> bool:
     if i <= 0 or i >= len(data):
         return False
 
-    _ensure_state_size()
+    _ensure_state_cols(data)
 
-    prev_all = bool(data.iloc[i-1].get("all_signals_on")) if ("all_signals_on" in data.columns and i > 0 and pd.notna(data.iloc[i-1].get("all_signals_on"))) else False
-
+    prev_all = bool(data.iloc[i - 1]["all_signals_on"]) if i > 0 else False
     all_on = True
-    for signal_idx, (name, fn, ttl_bars) in enumerate(SIGNAL_ORDER, start=1):
-        col = name  
+    row_idx = data.index[i]
+
+    for sig in SIGNAL_ORDER:
+        name = sig["name"]
+        fn = sig["fn"]
+        ttl_bars = sig["ttl"]
+        ttl_col = f"{name}__ttl"
 
         if not all_on:
-            data.at[data.index[i], col] = False
+            data.at[row_idx, name] = False
+            data.at[row_idx, ttl_col] = -1
             continue
 
-        fired_now = bool(fn(data, i))
-        if fired_now:
-            _valid_until[signal_idx - 1] = i + max(0, int(ttl_bars))
+        prev_ttl = int(data.iloc[i - 1][ttl_col]) if i > 0 else -1
+
+        if i <= prev_ttl:  # still valid inside TTL
             active = True
-        else:
-            active = (i <= _valid_until[signal_idx - 1])
-        #store state
-        data.at[data.index[i], col] = active
+            new_ttl = prev_ttl
+        else:  # TTL expired → check the function
+            if fn(data, i):
+                active = True
+                new_ttl = i + ttl_bars
+            else:
+                active = False
+                new_ttl = -1
+
+        data.at[row_idx, name] = active
+        data.at[row_idx, ttl_col] = new_ttl
+
         if not active:
             all_on = False
 
-    data.at[data.index[i], "all_signals_on"] = all_on
+    data.at[row_idx, "all_signals_on"] = all_on
 
+    # 🌟 GOLD STAR handling
     if all_on and not prev_all:
         try:
-            print(f"🌟 GOLD STAR formed at {data.index[i].date()}")
+            print(f"🌟 GOLD STAR formed at {pd.to_datetime(row_idx).date()}")
         except Exception:
             pass
 
+        # mark the gold star day
+        if "gold_star" not in data.columns:
+            data["gold_star"] = False
+        data.at[row_idx, "gold_star"] = True
+
+        # reset ALL signals + TTLs so next star can appear
+        for sig in SIGNAL_ORDER:
+            name = sig["name"]
+            data.at[row_idx, name] = False
+            data.at[row_idx, f"{name}__ttl"] = -1
+        data.at[row_idx, "all_signals_on"] = False
+        
     return all_on
+
+
+def reset_signal_state(data: pd.DataFrame):
+    """Clear all TTLs and signals in the DataFrame."""
+    _ensure_state_cols(data)
+    for sig in SIGNAL_ORDER:
+        data[sig["name"]] = False
+        data[f"{sig['name']}__ttl"] = -1
+    data["all_signals_on"] = False

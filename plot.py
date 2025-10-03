@@ -37,7 +37,7 @@ def plot_price_with_indicators(
         low=data['D_Low'],
         close=data['D_Close'],
         name='Daily',
-        visible=True
+        visible='legendonly'
     ), row=1, col=1)
 
     # === D_Close_smooth ===
@@ -104,7 +104,8 @@ def plot_price_with_indicators(
         mode='lines',
         name='Real W Senkou Span A',
         line=dict(color='green', width=1.5),
-        opacity=0.8
+        opacity=0.8,
+        visible='legendonly'
     ), row=1, col=1)
 
     # === Weekly Bollinger Bands (20) ===
@@ -115,7 +116,8 @@ def plot_price_with_indicators(
             y=config.weekly_bb['W_BB_Middle_20'],
             mode='lines',
             name='W BB Middle (20)',
-            line=dict(color='gray', width=2, dash='dot')
+            line=dict(color='gray', width=2, dash='dot'),
+            visible='legendonly'
         ), row=1, col=1)
 
         # Upper band
@@ -124,7 +126,9 @@ def plot_price_with_indicators(
             y=config.weekly_bb['W_BB_Upper_20'],
             mode='lines',
             name='W BB Upper (20)',
-            line=dict(color='darkblue', width=1)
+            line=dict(color='darkblue', width=1),
+            visible='legendonly'
+
         ), row=1, col=1)
 
         # Lower band
@@ -133,7 +137,8 @@ def plot_price_with_indicators(
             y=config.weekly_bb['W_BB_Lower_20'],
             mode='lines',
             name='W BB Lower (20)',
-            line=dict(color='darkblue', width=1)
+            line=dict(color='darkblue', width=1),
+            visible='legendonly'
         ), row=1, col=1)
 
 
@@ -146,7 +151,8 @@ def plot_price_with_indicators(
         mode='lines',
         name='Real W Senkou Span B',
         line=dict(color='red', width=1.5),
-        opacity=0.8
+        opacity=0.8,
+        visible='legendonly'
     ), row=1, col=1)
 
 
@@ -169,7 +175,7 @@ def plot_price_with_indicators(
                 mode='lines',
                 name=label,
                 line=dict(color=color, width=1),
-                visible=True if col == 'EMA_2y' else 'legendonly'
+                visible='legendonly'
             ), row=1, col=1)
 
     # === Daily EMA slope % (row=2) ===
@@ -193,7 +199,7 @@ def plot_price_with_indicators(
                 name=label,
                 line=dict(color=color, width=1),
                 hovertemplate='%{y:.2f}%<extra>' + label + '</extra>',
-                visible=True if col == 'EMA_2y_slope_%' else 'legendonly'
+                visible='legendonly'
             ), row=2, col=1)
 
     fig.update_yaxes(title_text="EMA slope %", ticksuffix="%", zeroline=True, zerolinewidth=1, row=2, col=1)
@@ -317,7 +323,8 @@ def plot_price_with_indicators(
                 y=data[col],
                 mode='lines',
                 name=label,
-                line=dict(color=color, width=3, dash='dot')
+                line=dict(color=color, width=3, dash='dot'),
+                visible='legendonly'
             ), row=1, col=1)
     
     
@@ -330,7 +337,8 @@ def plot_price_with_indicators(
                 y=dead_points['W_Senkou_span_B'],  # Plot at SenB future level
                 mode='markers',
                 name='SenB Trend Dead',
-                marker=dict(color='black', size=16, symbol='square')
+                marker=dict(color='black', size=16, symbol='square'),
+                visible='legendonly'
             ), row=1, col=1)
 
         # === Real Uptrend Start Marker ===
@@ -342,7 +350,8 @@ def plot_price_with_indicators(
                 y=start_points['D_Close'],  # Plot on close price
                 mode='markers',
                 name='Uptrend Start',
-                marker=dict(color='lime', size=14, symbol='star')
+                marker=dict(color='lime', size=14, symbol='star'),
+                visible='legendonly'
             ), row=1, col=1)
 
     # === Real Uptrend End Marker ===
@@ -354,7 +363,8 @@ def plot_price_with_indicators(
                 y=end_points['D_Close'],  # Plot on close price
                 mode='markers',
                 name='Uptrend End',
-                marker=dict(color='purple', size=14, symbol='square')
+                marker=dict(color='purple', size=14, symbol='square'),
+                visible='legendonly'
             ), row=1, col=1)
     
     # === Start of Dead Trendline Marker ===
@@ -366,7 +376,8 @@ def plot_price_with_indicators(
                 y=dead_trendline_starts['D_Close'],
                 mode='markers',
                 name='Start of Dead Trendline',
-                marker=dict(color='red', size=10, symbol='x')
+                marker=dict(color='red', size=10, symbol='x'),
+                visible='legendonly'
             ), row=1, col=1)
 
     # === Fitted Macro Trendline  from Start_of_Dead_Trendline to senb coresponding dead point===
@@ -390,7 +401,8 @@ def plot_price_with_indicators(
             mode='lines',
             name='W Senkou Span B (smoothed)',
             line=dict(color='blue', width=2, dash='solid'),
-            opacity=0.9
+            opacity=0.9,
+            visible='legendonly'
         ), row=1, col=1)
 
     # === Optional: slope of smoothed SenB ===
@@ -401,7 +413,8 @@ def plot_price_with_indicators(
             mode='lines',
             name='Slope of W SenB (relative pct)',
             line=dict(color='blue', width=1, dash='dot'),
-            opacity=0.8
+            opacity=0.8,
+            visible='legendonly'
         ), row=2, col=1)  # slope makes sense in 2nd subplot
 
     # === "real time" Weekly Senkou Span B (trailing poly fit, causal) ===
@@ -412,7 +425,8 @@ def plot_price_with_indicators(
             mode='lines',
             name='W SenB (trailing poly)',
             line=dict(color='purple', width=3, dash='solid'),
-            opacity=0.9
+            opacity=0.9,
+            visible='legendonly'
         ), row=1, col=1)
 
     # === Slope of Weekly Senkou Span B (trailing poly, %/week) ===
@@ -424,7 +438,8 @@ def plot_price_with_indicators(
             mode='lines',
             name='Slope of W SenB (relative %/week)',
             line=dict(color='blue', width=1, dash='dot'),
-            opacity=0.8
+            opacity=0.8,
+            visible='legendonly'
         ), row=2, col=1)
 
         # optional reference lines
@@ -440,7 +455,8 @@ def plot_price_with_indicators(
             mode='lines',
             name='Trendline from X',
             line=dict(color='orange', dash='dot'),
-            connectgaps=False  # <- VERY important!
+            connectgaps=False,  # <- VERY important!,
+            visible='legendonly'
         ), row=1, col=1)
 
     # === Plot Trendline_from_top (X) if it exists ===
@@ -451,7 +467,8 @@ def plot_price_with_indicators(
             mode='lines',
             name='Macro_trendline_from_X',
             line=dict(color='red', dash='dot'),
-            connectgaps=False  # <- VERY important!
+            connectgaps=False,  # <- VERY important!,
+            visible='legendonly'
         ), row=1, col=1)
 
     # # === Macro Trendlines from W_SenB ===
@@ -475,7 +492,7 @@ def plot_price_with_indicators(
                 mode="lines",
                 name=col.replace("W_", ""),   # cleaner legend name
                 line=dict(width=1),
-                visible=True
+                visible='legendonly'
             ), row=3, col=1)
 
 
@@ -641,7 +658,7 @@ def plot_price_with_indicators(
                 mode="markers",
                 marker=dict(symbol="circle", color="green", size=8, line=dict(width=0)),
                 name="Regline cross",
-                showlegend=True,
+                visible='legendonly'
             ), row=1, col=1)
 
 
@@ -655,7 +672,8 @@ def plot_price_with_indicators(
             y=buy_y,
             mode='markers',
             name='Buy Signal',
-            marker=dict(color='green', size=20, symbol='triangle-up')
+            marker=dict(color='green', size=20, symbol='triangle-up'),
+            visible='legendonly'
         ), row=1, col=1)
 
     # === Sell Markers ===
@@ -666,7 +684,8 @@ def plot_price_with_indicators(
             y=sell_y,
             mode='markers',
             name='Sell Signal',
-            marker=dict(color='red', size=20, symbol='triangle-down')
+            marker=dict(color='red', size=20, symbol='triangle-down'),
+            visible='legendonly'
         ), row=1, col=1)
 
     # # === Bollinger Bands (20) ===
@@ -708,13 +727,12 @@ def plot_price_with_indicators(
             line=dict(color='purple', width=2, dash='dash'),
             visible='legendonly'
         ), row=1, col=1)
+    #####################################################################################
 
     # *****************************START OF TTL SIGNALS *****************************
 
     # ================ SIGNALS TIME TO LIVE (TTL) see signals/core.py ==============
-    # next block relevant helper signals
 
-    # --- Signal: senb_w_future_slope_pct (plot on daily price ---
     if "senb_w_future_flat_base" in data.columns and "D_Close" in data.columns:
         mask = data["senb_w_future_flat_base"].fillna(False).infer_objects(copy=False).astype(bool)
         if mask.any():
@@ -745,9 +763,24 @@ def plot_price_with_indicators(
                 hovertemplate="senb_w_future_slope_pct<br>%{x}<br>SENB_W: %{y:.2f}<extra></extra>",
             ), row=1, col=1)
 
+    if "chikou_free" in data.columns and "D_Close" in data.columns:
+        mask = data["chikou_free"].fillna(False).infer_objects(copy=False).astype(bool)
+        if mask.any():
+            y = pd.Series(index=data.index, dtype="float64")
+            y.loc[mask] = data.loc[mask, "D_Close"]
+            fig.add_trace(go.Scatter(
+                x=data.index,
+                y=y,
+                mode="lines",
+                name="chikou_free",
+                line=dict(color="brown", width=5),
+                connectgaps=False,
+                hovertemplate="chikou_free<br>%{x}<br>SENB_W: %{y:.2f}<extra></extra>",
+            ), row=1, col=1)
+
     # --- All signals ON: gold star at price ---
-    if "all_signals_on" in data.columns and "D_Close" in data.columns:
-        mask = data["all_signals_on"].fillna(False).astype(bool)
+    if "gold_star" in data.columns and "D_Close" in data.columns:
+        mask = data["gold_star"].fillna(False).astype(bool)
 
         if mask.any():
             # keep only first True after a False (rising edge)
@@ -764,7 +797,7 @@ def plot_price_with_indicators(
                 marker=dict(symbol="star", size=18, color="gold", line=dict(width=1, color="black")),
             ), row=1, col=1)
 
-    # *****************************END OF TTL SIGNALS *****************************
+    # *****************************END OF TTL MAIN SIGNALS *****************************
     # ===== helper signals markers ======== #
     # === W_SenB_Future_flat_to_up_point ===
     if 'W_SenB_Future_flat_to_up_point' in data.columns:
@@ -774,10 +807,11 @@ def plot_price_with_indicators(
             y=future_senb_points['W_Senkou_span_B'],  # mark at SenB future value
             mode='markers',
             name='SenB Future falt -> Rising',
-            marker=dict(color='cyan', size=14, symbol='star')
+            marker=dict(color='cyan', size=14, symbol='star'),
+            visible='legendonly'
         ), row=1, col=1)
 
-        # === W_SenB_base_val ===
+    #=== W_SenB_base_val ===
     if 'W_SenB_base_val' in data.columns:
         base_points = data[~data['W_SenB_base_val'].isna()]
         fig.add_trace(go.Scatter(
@@ -785,7 +819,8 @@ def plot_price_with_indicators(
             y=base_points['W_SenB_base_val'],
             mode='markers',
             name='SenB Flat Base Anchor',
-            marker=dict(color='orange', size=12, symbol='diamond')
+            marker=dict(color='orange', size=12, symbol='diamond'),
+            visible='legendonly'
         ), row=1, col=1)
 
 
@@ -796,12 +831,96 @@ def plot_price_with_indicators(
             y=future_senb_points['W_Senkou_span_B'],  # mark at SenB future value
             mode='markers',
             name='SenB Future -> rise %',
-            marker=dict(color='green', size=14, symbol='star')
+            marker=dict(color='green', size=14, symbol='star'),
+            visible='legendonly'
         ), row=1, col=1)
+    
+    # if "chikou_free_check_origin" in data.columns:
+    #     origin_points = data[data["chikou_free_check_origin"]]
+    #     fig.add_trace(go.Scatter(
+    #         x=origin_points.index,
+    #         y=origin_points["D_Close"],  # plot at daily close level
+    #         mode="markers",
+    #         name="Chikou Origin",
+    #         marker=dict(color="orange", size=12, symbol="x")
+    #     ), row=1, col=1)
+
+    # ############ Helper signals TRENDLINE's
+    # Mid
+    col = "trendln_mid"
+    if col in data.columns:
+        reg = pd.to_numeric(data[col], errors="coerce")
+        if reg.notna().any():
+            fig.add_trace(go.Scatter(
+                x=reg.index,
+                y=reg,
+                mode="lines",
+                name="Trendline mid",
+                line=dict(color="blue", width=2, dash="dash"),
+                connectgaps=False
+            ), row=1, col=1)
+
+    # Top
+    col = "trendln_top"
+    if col in data.columns:
+        reg = pd.to_numeric(data[col], errors="coerce")
+        if reg.notna().any():
+            fig.add_trace(go.Scatter(
+                x=reg.index,
+                y=reg,
+                mode="lines",
+                name="Trendline top",
+                line=dict(color="red", width=1, dash="dot"),
+                connectgaps=False
+            ), row=1, col=1)
+
+    # Bottom
+    col = "trendln_bottom"
+    if col in data.columns:
+        reg = pd.to_numeric(data[col], errors="coerce")
+        if reg.notna().any():
+            fig.add_trace(go.Scatter(
+                x=reg.index,
+                y=reg,
+                mode="lines",
+                name="Trendline bottom",
+                line=dict(color="green", width=1, dash="dot"),
+                connectgaps=False
+            ), row=1, col=1)
+
+    
+        # Breakout (hard top)
+    col = "trendln_breakout"
+    if col in data.columns:
+        reg = pd.to_numeric(data[col], errors="coerce")
+        if reg.notna().any():
+            fig.add_trace(go.Scatter(
+                x=reg.index,
+                y=reg,
+                mode="lines",
+                name="Trendline breakout",
+                line=dict(color="red", width=2, dash="solid"),  # solid + thicker
+                connectgaps=False
+            ), row=1, col=1)
+
+    # Breakdown (hard bottom)
+    col = "trendln_breakdown"
+    if col in data.columns:
+        reg = pd.to_numeric(data[col], errors="coerce")
+        if reg.notna().any():
+            fig.add_trace(go.Scatter(
+                x=reg.index,
+                y=reg,
+                mode="lines",
+                name="Trendline breakdown",
+                line=dict(color="green", width=2, dash="solid"),  # solid + thicker
+                connectgaps=False
+            ), row=1, col=1)
 
 
     # === END of helper signals ===
-  
+    #####################################################################################
+
 
 
 
