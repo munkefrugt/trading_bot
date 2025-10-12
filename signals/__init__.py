@@ -1,1 +1,1 @@
-from .core import get_signals
+from .core import start_signal_sequence_TTL

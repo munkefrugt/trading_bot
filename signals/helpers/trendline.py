@@ -30,6 +30,13 @@ def build_trend_channel_for_segment(
 
     Returns (data, bool) where bool = True if smooth_col is above breakout at i.
     """
+
+    # check if we already have a top channel and current smoothed price is above it
+    if col_top in data.columns and not pd.isna(data.loc[data.index[i], col_top]):
+        if data.loc[data.index[i], smooth_col] < data.loc[data.index[i], col_top]:
+            # skip recalculation if smooth not above channel top
+            return data, False
+        
     # ensure float output columns exist
     for c in (col_mid, col_top, col_bot, col_resist2, col_breakout, col_breakdown):
         if c not in data.columns:

@@ -117,7 +117,7 @@ def plot_price_with_indicators(
             mode='lines',
             name='W BB Middle (20)',
             line=dict(color='gray', width=2, dash='dot'),
-            visible='legendonly'
+            #visible='legendonly'
         ), row=1, col=1)
 
         # Upper band

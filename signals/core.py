@@ -4,16 +4,22 @@ import pandas as pd
 from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
 from .trendline_crossings import trendline_crossings
+from .BB_recent_squeeze import BB_recent_squeeze
 # from .chikou_free import chikou_free
 
-months = 14
-
+years = 5
+time_to_live = 365 * years
 # define signals in a readable way
 SIGNAL_ORDER = [
-    {"name": "senb_w_future_flat_base", "fn": senb_w_future_flat_base, "ttl": 7*4*months},
-    {"name": "senb_w_future_slope_pct", "fn": senb_w_future_slope_pct, "ttl": 7*4*months},
-    {"name": "trendline_crossings", "fn": trendline_crossings, "ttl": 7*4*months},
-    # {"name": "chikou_free", "fn": chikou_free, "ttl": 7*4*months},
+    {"name": "senb_w_future_flat_base", "fn": senb_w_future_flat_base, "ttl": time_to_live},
+    {"name": "senb_w_future_slope_pct", "fn": senb_w_future_slope_pct, "ttl": time_to_live},
+    #TODO consider if break line can be changed lower? 
+    # sometimes the start makes the break line to high
+    {"name": "trendline_crossings", "fn": trendline_crossings, "ttl": time_to_live},
+    
+    # {"name": "chikou_free", "fn": chikou_free, "ttl": time_to_live},
+    #{"name": "BB", "fn": BB_recent_squeeze, "ttl": time_to_live},
+
 ]
 
 
@@ -29,7 +35,7 @@ def _ensure_state_cols(data: pd.DataFrame):
         data["all_signals_on"] = False
 
 
-def get_signals(data: pd.DataFrame, i: int) -> bool:
+def start_signal_sequence_TTL(data: pd.DataFrame, i: int) -> bool:
     if i <= 0 or i >= len(data):
         return False
 

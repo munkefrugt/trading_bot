@@ -44,7 +44,7 @@ META
 #YYYY-MM-DD
 start = "2015-01-01"
 end = datetime.today().strftime("%Y-%m-%d")
-#end = "2025-07-11"
+#end = "2019-01-01"
 
 
 def fetch_btc_data(start=start, end=end, interval="1d"):

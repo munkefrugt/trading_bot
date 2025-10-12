@@ -40,17 +40,18 @@ def find_start_of_consolidation(data: pd.DataFrame, i: int):
 
 def trendline_crossings(data: pd.DataFrame, i: int) -> bool:
     seg_start_time = find_start_of_consolidation(data, i)
-    # keep building channel if channel arent done. 
+    # keep building channel if channel isen't done. 
     data, D_Close_smooth_breakout = build_trend_channel_for_segment(data, i)    
     crossings = trendline_eval(
         data,   
         start_ts=seg_start_time,
         end_ts=data.index[i])
 
-    print("crossings")
-    print(crossings)
+    #print("crossings")
+    #print(crossings)
 
     if crossings > 2 and D_Close_smooth_breakout:
+        print("breakout")
         return True 
     
     return False
