@@ -39,4 +39,5 @@ def senb_w_future_flat_base(data: pd.DataFrame, i: int) -> bool:
         if anchor_idx.size and anchor_idx[0] != -1 and 0 <= anchor_idx[0] < len(data):
             data.at[data.index[anchor_idx[0]], "W_SenB_base_val"] = base_val
 
+    print("found flat base")
     return True

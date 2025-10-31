@@ -51,6 +51,7 @@ def main():
         #signal helpers: 
         'W_SenB_Future_slope_ok_point',
         'chikou_free_check_origin',
+        'found_consolidation'
 
     ]
     FLOAT_COLS = [

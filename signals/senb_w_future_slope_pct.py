@@ -33,4 +33,5 @@ def senb_w_future_slope_pct(
     if idx.size and idx[0] != -1 and idx[0] < len(data):
         data.at[data.index[idx[0]], "W_SenB_Future_slope_ok_point"] = True
 
+    print("senb_w_futu're_slope_pct found")
     return True
