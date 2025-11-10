@@ -1,57 +1,41 @@
-#helpers/trendline_crossings.py
+#signals/trendline_crossings.py
 import pandas as pd
 import numpy as np
 from .helpers.trendline import build_trend_channel_for_segment
 from .helpers.trendline_eval import trendline_eval
 
 
-SLOPE_COL = "W_Senkou_span_B_slope_pct"
-SLOPE_ABS_THRESHOLD = 2.0  # %
-
-def find_start_of_consolidation(data: pd.DataFrame, i: int):
-    """
-    Walk backward from i until |W_Senkou_span_B_slope_pct| > threshold.
-    Mark that bar as consolidation start and set an anchor ≈ 26 calendar weeks earlier
-    (snap to nearest available bar at/before that time).
-    Returns (start_ts, anchor_ts_or_None) or (None, None) if not found.
-    """
-    if i <= 0 or i >= len(data) or SLOPE_COL not in data.columns:
-        return None
-
-    j = i
-    while j > 0:
-        slope = data.at[data.index[j], SLOPE_COL]
-        if pd.notna(slope) and abs(slope) > SLOPE_ABS_THRESHOLD:
-            time_senb_rise = data.index[j]
-            data.loc[time_senb_rise, "W_SenB_Consol_Start_SenB"] = True
-
-            # 26 calendar weeks earlier → snap to nearest available bar at/before that time
-            anchor_time_target = time_senb_rise - pd.Timedelta(weeks=26)
-            idx = data.index.get_indexer([anchor_time_target], method="pad")
-            if idx.size and idx[0] != -1:
-                seg_start_time = data.index[idx[0]]
-                data.loc[seg_start_time, "W_SenB_Consol_Start_Price"] = True
-                return seg_start_time
-            return None
-        j -= 1
-
-    return None
-
-
 def trendline_crossings(data: pd.DataFrame, i: int) -> bool:
-    seg_start_time = find_start_of_consolidation(data, i)
-    # keep building channel if channel isen't done. 
-    data, D_Close_smooth_breakout = build_trend_channel_for_segment(data, i)    
+    """
+    Builds or updates a trend channel based on the most recent consolidation start,
+    then checks for breakout conditions.
+    """
+
+    # --- Find last True in W_SenB_Consol_Start_Price before index i ---
+    seg_start_time = None
+    if "W_SenB_Consol_Start_Price" in data.columns:
+        true_indices = data.index[data["W_SenB_Consol_Start_Price"] == True]
+        true_indices = true_indices[true_indices <= data.index[i]]
+        if len(true_indices) > 0:
+            seg_start_time = true_indices[-1]
+
+    if seg_start_time is None:
+        return False
+
+    # --- Build or extend the trend channel ---
+    data, D_Close_smooth_breakout = build_trend_channel_for_segment(data, i)
+
+    # --- Evaluate number of crossings ---
     crossings = trendline_eval(
-        data,   
+        data,
         start_ts=seg_start_time,
-        end_ts=data.index[i])
+        end_ts=data.index[i]
+    )
 
-    #print("crossings")
-    #print(crossings)
-
+    # --- Breakout condition ---
     if crossings > 2 and D_Close_smooth_breakout:
-        print("breakout")
-        return True 
-    
+        print(f"breakout (from {seg_start_time.date()})")
+        return True
+
     return False
+

@@ -1,5 +1,6 @@
 # signals/senb_w_future_slope_pct.py
 from .helpers.day_to_week import day_to_week
+from .helpers.find_start_of_consolidation import find_start_of_consolidation
 import config
 import pandas as pd
 
@@ -32,6 +33,8 @@ def senb_w_future_slope_pct(
     idx = data.index.get_indexer([future_ts], method="backfill")
     if idx.size and idx[0] != -1 and idx[0] < len(data):
         data.at[data.index[idx[0]], "W_SenB_Future_slope_ok_point"] = True
+        find_start_of_consolidation(data, i)
+        #make col seg_start_time
 
     print("senb_w_futu're_slope_pct found")
     return True

@@ -11,7 +11,7 @@ SIGNALS = [
     ("senb_w_future_slope_pct", senb_w_future_slope_pct, False),
     ("trendline_crossings", trendline_crossings, True),
 ]
-
+#TODO solve the sequencing problem with sequencing ubjects. 
 
 def start_signal_sequence(data: pd.DataFrame, i: int) -> bool:
     """
