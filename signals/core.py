@@ -1,68 +1,55 @@
-# signals/core.py
+from .SignalSequence import SignalSequence
 import pandas as pd
 from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
-
 from .trendline_crossings import trendline_crossings
 
-#(name, fn, keep_checking) 
+
+# just a plain list of signal functions, simple and clear
 SIGNALS = [
-    ("senb_w_future_flat_base", senb_w_future_flat_base, False),
-    ("senb_w_future_slope_pct", senb_w_future_slope_pct, False),
-    ("trendline_crossings", trendline_crossings, True),
+    senb_w_future_flat_base,
+    senb_w_future_slope_pct,
+    trendline_crossings,
 ]
-#TODO solve the sequencing problem with sequencing ubjects. 
 
-def start_signal_sequence(data: pd.DataFrame, i: int) -> bool:
-    """
-    Sequential signal processor with state carry-over.
+list_of_signal_sequences = []
 
-    - Each signal keeps its state from the previous bar unless reset.
-    - A signal function runs only when:
-        • all previous signals are active, AND
-        • it’s not already True (unless keep_checking=True).
-    - Once all signals are True → gold_star.
-    """
-    if i <= 0 or i >= len(data):
+
+def check_signal_sequence(data, i, symbol="BTC-USD"):
+    global list_of_signal_sequences
+
+    # 1️⃣ find any active sequence or None
+    active_seq_object = next((s for s in list_of_signal_sequences if s.active), None)
+
+    # 2️⃣ if none active -> maybe start new one
+    first_func = SIGNALS[0]
+    if active_seq_object is None:
+        if first_func(data, i): 
+            # make new sequence object 
+            seq = SignalSequence(start_index=i, symbol=symbol)
+            seq.active = True
+            # mark first signal as triggered
+            seq.states_dict[first_func] = True
+            # add to list
+            list_of_signal_sequences.append(seq)
+            print(f"🟢 New SignalSequence started at {data.index[i].date()}")
         return False
 
-    # --- Ensure required columns exist ---
-    for name, _, _ in SIGNALS:
-        if name not in data:
-            data[name] = False
-    for col in ["gold_star", "sequence_lost"]:
-        if col not in data:
-            data[col] = False
+    # 3️⃣ loop over signals and trigger next one
+    for func in SIGNALS:
+        is_sequence_state = active_seq_object.states_dict.get(func, False)
+        if not is_sequence_state:
+            if func(data, i):
+                active_seq_object.states_dict[func] = True
+                print(f"✅ {func.__name__} triggered at {data.index[i].date()}")
+            break
 
-    # --- Iterate through signals ---
-    for idx, (name, fn, keep_checking) in enumerate(SIGNALS):
-        prev_state = bool(data.at[data.index[i - 1], name])
+    # 4️⃣ check if all signals are done
+    if all(active_seq_object.states_dict.get(func, False) for func in SIGNALS):
+        active_seq_object.done = True
+        active_seq_object.active = False
+        data.at[data.index[i], "gold_star"] = True
+        print(f"🌟 GOLD STAR at {data.index[i].date()}")
+        return True
 
-        # Check if all previous signals are active at this index
-        previous_signals = [s for s, _, _ in SIGNALS[:idx]]
-        all_previous_on = all(bool(data.at[data.index[i], s]) for s in previous_signals) if previous_signals else True
-
-        # --- Decide if this function should run ---
-        if all_previous_on:
-            if not prev_state or keep_checking:
-                # run the function
-                data.at[data.index[i], name] = fn(data, i)
-            else:
-                # carry state forward
-                data.at[data.index[i], name] = True
-        else:
-            # carry forward previous state if earlier ones aren’t ready
-            data.at[data.index[i], name] = prev_state
-
-    # --- Mark gold star if all signals are True ---
-    all_on = all(bool(data.at[data.index[i], s]) for s, _, _ in SIGNALS)
-    data.at[data.index[i], "gold_star"] = all_on
-
-    if all_on:
-        print(f"🌟 GOLD STAR at {pd.to_datetime(data.index[i]).date()}")
-        # reset previous row so the sequence doesn't immediately restart
-        for s, _, _ in SIGNALS:
-            data.at[data.index[i], s] = False
-
-
-    return all_on
+    return False

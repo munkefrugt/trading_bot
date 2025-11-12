@@ -5,7 +5,7 @@ from sell import sell_check
 from buy import buy_check
 import pandas as pd
 import numpy as np
-from signals.core import start_signal_sequence
+from signals.core import check_signal_sequence
 from signals.helpers.future_check import future_week_sena_above_senb
 import config
 
@@ -37,7 +37,7 @@ def run_backtest(data: pd.DataFrame):
         if len(open_trades) == 0:
             # extra minimal check if w_senb is under W_sena 
             if future_week_sena_above_senb(data, i):
-                if  start_signal_sequence(data,i):
+                if  check_signal_sequence(data,i):
                     print(f"🚀 in back test. -Buy trigger (Gold Star) at {data.index[i].date()}")
                     open_trades, cash, buy_markers, trades, data = buy_check(
                         open_trades=open_trades,

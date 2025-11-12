@@ -1,1 +1,1 @@
-from .core import start_signal_sequence
+from .core import check_signal_sequence
