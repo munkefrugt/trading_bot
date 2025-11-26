@@ -11,7 +11,8 @@ class SignalSequence:
         self.states_dict = {
             "senb_w_future_flat_base": False,
             "senb_w_future_slope_pct": False,
-            "trendline_crossings": False
+            "trendline_crossings": False,
+            "BB_recent_squeeze": False
         }
 
         self.helpers = {
@@ -19,6 +20,8 @@ class SignalSequence:
         "W_SenB_Consol_Start_SenB": None,
         "W_SenB_Future_slope_ok_point": None,
         "trendline_crossings_count": 0,
+
+        # BB helper signals?
         # etc.
         }
         self.active = False

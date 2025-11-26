@@ -917,6 +917,80 @@ def plot_price_with_indicators(
                 connectgaps=False
             ), row=1, col=1)
 
+    # =================== BB SQUEEZE VISUALS ===================
+
+    # --- Pull missing BB columns from weekly_bb if needed ---
+    wbb = getattr(config, "weekly_bb", None)
+
+    def copy_weekly_to_daily(colname):
+        """Ensure daily column exists by mapping from weekly_bb where needed."""
+        if colname not in data.columns:
+            data[colname] = False  # default
+        if wbb is not None:
+            # For each weekly point → apply to matching daily dates
+            for ts, val in wbb[colname].fillna(False).astype(bool).items():
+                if val and ts in data.index:
+                    data.at[ts, colname] = True
+
+    # make sure daily columns exist and are synced from weekly
+    for col in [
+        "BB_tight_channel",
+        "BB_squeeze_start",
+        "BB_post_squeeze_expansion"
+    ]:
+        copy_weekly_to_daily(col)
+
+    # --- Now plot safely ---
+
+    if all(col in data.columns for col in [
+        "BB_tight_channel",
+        "BB_squeeze_start",
+        "BB_post_squeeze_expansion"
+    ]):
+
+        # --- Tight Channel Highlight ---
+        mask_tight = data["BB_tight_channel"].fillna(False).astype(bool)
+        if mask_tight.any():
+            fig.add_trace(go.Scatter(
+                x=data.index,
+                y=data["D_Close"],
+                mode="lines",
+                line=dict(width=0),   # invisible
+                fill="tozeroy",
+                fillcolor="rgba(255, 140, 0, 0.18)",  # orange haze
+                name="BB Tight Channel",
+                hoverinfo="skip",
+                opacity=0.30,
+                visible="legendonly"
+            ), row=1, col=1)
+
+        # --- Squeeze Start (diamond) ---
+        starts = data[data["BB_squeeze_start"].fillna(False).astype(bool)]
+        if not starts.empty:
+            fig.add_trace(go.Scatter(
+                x=starts.index,
+                y=starts["D_Close"],
+                mode="markers",
+                name="BB Squeeze Start",
+                marker=dict(symbol="diamond", color="orange", size=12),
+                visible="legendonly"
+            ), row=1, col=1)
+
+        # --- Post-Squeeze Expansion (triangle-up) ---
+        exp = data[data["BB_post_squeeze_expansion"].fillna(False).astype(bool)]
+        if not exp.empty:
+            fig.add_trace(go.Scatter(
+                x=exp.index,
+                y=exp["D_Close"],
+                mode="markers",
+                name="BB Expansion",
+                marker=dict(symbol="triangle-up", color="red", size=14),
+                visible="legendonly"
+            ), row=1, col=1)
+
+    # ===========================================================
+
+
 
     # === END of helper signals ===
     #####################################################################################

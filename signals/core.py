@@ -3,13 +3,16 @@ import pandas as pd
 from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
 from .trendline_crossings import trendline_crossings
-
+from .BB_recent_squeeze import BB_recent_squeeze
 
 # just a plain list of signal functions, simple and clear
 SIGNALS = [
     senb_w_future_flat_base,
     senb_w_future_slope_pct,
     trendline_crossings,
+    #TODO. ændre trendline.py til kun at bruge toppe til at bygge trendlines. 
+    #TODO insure it actualy had a squeeze in its signal sequeze object
+    BB_recent_squeeze,
 ]
 
 list_of_signal_sequences = []

@@ -45,13 +45,17 @@ def main():
         'senb_w_future_flat_base',
         'senb_w_future_slope_pct',
         'chikou_free',
-        'gold_star'
+        'gold_star',
 
         'all_signals_on',
         #signal helpers: 
         'W_SenB_Future_slope_ok_point',
         'chikou_free_check_origin',
-        'found_consolidation'
+        'found_consolidation',
+        'BB_squeeze_start',
+        'BB_squeeze_end',
+        'BB_tight_channel',
+        'BB_post_squeeze_expansion',
 
     ]
     FLOAT_COLS = [
@@ -103,6 +107,8 @@ def main():
     print(f"{len(buys)} buy signals, {len(sells)} sell signals")
 
     # --- Plot ---
+
+    data = data.fillna({col: False for col in BOOL_COLS})
     plot_price_with_indicators(
         data,
         buy_signals=buys,
