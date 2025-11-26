@@ -919,86 +919,133 @@ def plot_price_with_indicators(
 
     # =================== BB SQUEEZE VISUALS ===================
 
-    # --- Pull missing BB columns from weekly_bb if needed ---
     wbb = getattr(config, "weekly_bb", None)
 
-    def copy_weekly_to_daily(colname):
-        """Ensure daily column exists by mapping from weekly_bb where needed."""
-        if colname not in data.columns:
-            data[colname] = False  # default
-        if wbb is not None:
-            # For each weekly point → apply to matching daily dates
-            for ts, val in wbb[colname].fillna(False).astype(bool).items():
-                if val and ts in data.index:
-                    data.at[ts, colname] = True
-
-    # make sure daily columns exist and are synced from weekly
+    # Create daily columns if missing
     cols = [
         "BB_tight_channel",
         "BB_squeeze_start",
-        "BB_post_squeeze_expansion"
+        "BB_post_squeeze_expansion",
+        "BB_bubble_start_time",
+        "BB_bubble_peak_time",
+        "BB_bubble_end_time",
     ]
 
     for col in cols:
-        # Only try copying if weekly_bb actually has that column
-        if wbb is not None and col in wbb.columns:
-            copy_weekly_to_daily(col)
-        else:
-            # Create an empty daily column so plotting doesn't crash
-            if col not in data.columns:
-                data[col] = False
+        if col not in data.columns:
+            data[col] = None  # None = no symbol
+
+    # Helper to map weekly timestamps → daily symbols
+    def mark_daily_symbol(ts, colname, symbol):
+        """Mark the daily row corresponding to weekly timestamp with a symbol."""
+        if ts in data.index:
+            data.at[ts, colname] = symbol
 
 
-    # --- Now plot safely ---
+    # ----------------------------------------------
+    # Map WEEKLY → DAILY for bubble + calm markers
+    # ----------------------------------------------
 
-    if all(col in data.columns for col in [
-        "BB_tight_channel",
-        "BB_squeeze_start",
-        "BB_post_squeeze_expansion"
-    ]):
+    if wbb is not None:
 
-        # --- Tight Channel Highlight ---
-        mask_tight = data["BB_tight_channel"].fillna(False).astype(bool)
-        if mask_tight.any():
-            fig.add_trace(go.Scatter(
-                x=data.index,
-                y=data["D_Close"],
-                mode="lines",
-                line=dict(width=0),   # invisible
-                fill="tozeroy",
-                fillcolor="rgba(255, 140, 0, 0.18)",  # orange haze
-                name="BB Tight Channel",
-                hoverinfo="skip",
-                opacity=0.30,
-                visible="legendonly"
-            ), row=1, col=1)
+        # Bubble start, peak, end
+        for ts, val in wbb["BB_bubble_start_time"].dropna().items():
+            mark_daily_symbol(val, "BB_bubble_start_time", "square")
 
-        # --- Squeeze Start (diamond) ---
-        starts = data[data["BB_squeeze_start"].fillna(False).astype(bool)]
-        if not starts.empty:
-            fig.add_trace(go.Scatter(
-                x=starts.index,
-                y=starts["D_Close"],
-                mode="markers",
-                name="BB Squeeze Start",
-                marker=dict(symbol="diamond", color="orange", size=12),
-                visible="legendonly"
-            ), row=1, col=1)
+        for ts, val in wbb["BB_bubble_peak_time"].dropna().items():
+            mark_daily_symbol(val, "BB_bubble_peak_time", "square-big")
 
-        # --- Post-Squeeze Expansion (triangle-up) ---
-        exp = data[data["BB_post_squeeze_expansion"].fillna(False).astype(bool)]
-        if not exp.empty:
-            fig.add_trace(go.Scatter(
-                x=exp.index,
-                y=exp["D_Close"],
-                mode="markers",
-                name="BB Expansion",
-                marker=dict(symbol="triangle-up", color="red", size=14),
-                visible="legendonly"
-            ), row=1, col=1)
+        for ts, val in wbb["BB_bubble_end_time"].dropna().items():
+            mark_daily_symbol(val, "BB_bubble_end_time", "x")
+
+        # Calm zone (tight channel weeks)
+        if "BB_tight_channel" in wbb.columns:
+            for ts, val in wbb["BB_tight_channel"].fillna(False).astype(bool).items():
+                if val:
+                    if ts in data.index:
+                        data.at[ts, "BB_tight_channel"] = "dot"
+
+
+    # ----------------------------------------------
+    # Now plot symbols
+    # ----------------------------------------------
+
+    # --- Bubble START (blue square) ---
+    bs = data[data["BB_bubble_start_time"] == "square"]
+    if not bs.empty:
+        fig.add_trace(go.Scatter(
+            x=bs.index,
+            y=bs["D_Close"],
+            mode="markers",
+            name="Bubble Start",
+            marker=dict(symbol="square", color="blue", size=10),
+            visible="legendonly",
+        ), row=1, col=1)
+
+    # --- Bubble PEAK (bigger blue square) ---
+    bp = data[data["BB_bubble_peak_time"] == "square-big"]
+    if not bp.empty:
+        fig.add_trace(go.Scatter(
+            x=bp.index,
+            y=bp["D_Close"],
+            mode="markers",
+            name="Bubble Peak",
+            marker=dict(symbol="square", color="blue", size=14),
+            visible="legendonly",
+        ), row=1, col=1)
+
+    # --- Bubble END (blue X) ---
+    be = data[data["BB_bubble_end_time"] == "x"]
+    if not be.empty:
+        fig.add_trace(go.Scatter(
+            x=be.index,
+            y=be["D_Close"],
+            mode="markers",
+            name="Bubble End",
+            marker=dict(symbol="x", color="blue", size=12),
+            visible="legendonly",
+        ), row=1, col=1)
+
+
+    # --- Calm Zone weeks (teal dots) ---
+    cz = data[data["BB_tight_channel"] == "dot"]
+    if not cz.empty:
+        fig.add_trace(go.Scatter(
+            x=cz.index,
+            y=cz["D_Close"],
+            mode="markers",
+            name="Calm Zone",
+            marker=dict(symbol="circle", color="teal", size=5),
+            visible="legendonly",
+        ), row=1, col=1)
+
+
+    # --- Squeeze Start (cyan diamond) ---
+    ss = data[data["BB_squeeze_start"].fillna(False).astype(bool)]
+    if not ss.empty:
+        fig.add_trace(go.Scatter(
+            x=ss.index,
+            y=ss["D_Close"],
+            mode="markers",
+            name="Squeeze Start",
+            marker=dict(symbol="diamond", color="cyan", size=12),
+            visible="legendonly",
+        ), row=1, col=1)
+
+
+    # --- Optional: Weekly Expansion (red triangle) ---
+    exp = data[data["BB_post_squeeze_expansion"].fillna(False).astype(bool)]
+    if not exp.empty:
+        fig.add_trace(go.Scatter(
+            x=exp.index,
+            y=exp["D_Close"],
+            mode="markers",
+            name="BB Expansion",
+            marker=dict(symbol="triangle-up", color="red", size=14),
+            visible="legendonly",
+        ), row=1, col=1)
 
     # ===========================================================
-
 
 
     # === END of helper signals ===

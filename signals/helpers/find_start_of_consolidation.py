@@ -39,8 +39,8 @@ def find_start_of_consolidation(data: pd.DataFrame, i: int):
                 candidate_idx = data.index[j]
 
         # Debug trace every ~10 steps or at start/end
-        if j % 10 == 0 or j == i or j < 10:
-            print(f"  ↩️  {data.index[j].date()} slope={slope} candidate={candidate_idx.date() if candidate_idx else None}")
+        #if j % 10 == 0 or j == i or j < 10:
+        #    print(f"  ↩️  {data.index[j].date()} slope={slope} candidate={candidate_idx.date() if candidate_idx else None}")
 
         # Detect SenB slope break
         if pd.notna(slope) and abs(slope) > SLOPE_ABS_THRESHOLD:
