@@ -40,7 +40,7 @@ Repository: https://github.com/munkefrugt/trading_bot
 
 This project is built using sociocracy. Anyone joining must be willing to collaborate using consent-based decision-making, clear domains, and transparent communication.
 
-You only need one of the skills below to be useful.
+You only need one of the skills below to join.
 
 ### Code Review and Refactoring
 
