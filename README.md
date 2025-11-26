@@ -17,6 +17,14 @@ Ethics remain personal. The system is asset-neutral.
 
 ## Project Status
 
+
+Below is an example output from the backtesting engine:
+
+![Backtest Example](pictures/example_AMD.png)
+*(Example backtest on AMD using the current prototype strategy.  
+Green arrows indicate buy signals and red arrows indicate sell signals.  
+Flat equity periods mean the system will eventually be searching for other opportunities.)*
+
 This repository currently contains:
 
 - A complete backtesting engine  
@@ -97,10 +105,29 @@ pip install -r requirements.txt
 
 ---
 
-## Running Backtests
+### Run
 
 ```
-python backtest.py
+python main.py
+```
+
+---
+
+### Try it with other symbols
+
+Go to the file `get_data.py` in the same folder as `main.py`.
+
+Change the first line in the function `fetch_btc_data`:
+
+```
+symbol = "YOUR_SYMBOL_HERE"
+```
+
+Examples:
+
+```
+symbol = "BTC-USD"
+symbol = "AMD"
 ```
 
 ---

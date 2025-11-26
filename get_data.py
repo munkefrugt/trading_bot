@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime
 
-
+#examples
 """
 Large-Cap Coins (High Liquidity, Lower Volatility)
 
@@ -34,7 +34,7 @@ Great for stress-testing stop-loss and position sizing logic.
 
     PEPE-USD (or similar) – extreme pump-and-dump profiles.
 """
-
+#examples:
 """
 NVDA
 AMD
@@ -48,7 +48,8 @@ end = datetime.today().strftime("%Y-%m-%d")
 
 
 def fetch_btc_data(start=start, end=end, interval="1d"):
-    data = yf.download("AMD", start=start, end=end, interval=interval, auto_adjust=False)
+    symbol = "AMD"
+    data = yf.download(symbol, start=start, end=end, interval=interval, auto_adjust=False)
     
     # Flatten multi-level column names if needed
     if isinstance(data.columns, pd.MultiIndex):

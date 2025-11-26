@@ -12,7 +12,7 @@ SIGNALS = [
     trendline_crossings,
     #TODO. ændre trendline.py til kun at bruge toppe til at bygge trendlines. 
     #TODO insure it actualy had a squeeze in its signal sequeze object
-    BB_recent_squeeze,
+    #BB_recent_squeeze,
 ]
 
 list_of_signal_sequences = []

@@ -202,7 +202,7 @@ def plot_price_with_indicators(
                 visible='legendonly'
             ), row=2, col=1)
 
-    fig.update_yaxes(title_text="EMA slope %", ticksuffix="%", zeroline=True, zerolinewidth=1, row=2, col=1)
+    #fig.update_yaxes(title_text="Equity curve", ticksuffix="%", zeroline=True, zerolinewidth=1, row=2, col=1)
     try:
         fig.add_hline(y=0, line_dash='dot', line_width=1, opacity=0.4, row=2, col=1)
     except Exception:
@@ -933,12 +933,21 @@ def plot_price_with_indicators(
                     data.at[ts, colname] = True
 
     # make sure daily columns exist and are synced from weekly
-    for col in [
+    cols = [
         "BB_tight_channel",
         "BB_squeeze_start",
         "BB_post_squeeze_expansion"
-    ]:
-        copy_weekly_to_daily(col)
+    ]
+
+    for col in cols:
+        # Only try copying if weekly_bb actually has that column
+        if wbb is not None and col in wbb.columns:
+            copy_weekly_to_daily(col)
+        else:
+            # Create an empty daily column so plotting doesn't crash
+            if col not in data.columns:
+                data[col] = False
+
 
     # --- Now plot safely ---
 
