@@ -2,14 +2,14 @@
 
 import numpy as np
 
-from treat_extrema import (
+from .treat_extrema import (
     smooth_series,
     find_local_extrema_trend_aware,
     snap_extrema,
     merge_extrema,
 )
 
-from trendline_builder import best_pivot_trendline
+from .trendline_builder import best_pivot_trendline
 
 
 def fit_trendlines_hybrid(y_raw, cluster_bar_distance=8):
