@@ -9,10 +9,11 @@ from .BB_recent_squeeze import BB_recent_squeeze
 SIGNALS = [
     senb_w_future_flat_base,
     senb_w_future_slope_pct,
+    # ADD well below major general  trend line condition.
     trendline_crossings,
-    #TODO. ændre trendline.py til kun at bruge toppe til at bygge trendlines. 
-    #TODO insure it actualy had a squeeze in its signal sequeze object
-    BB_recent_squeeze,
+    # TODO. ændre trendline.py til kun at bruge toppe til at bygge trendlines.
+    # TODO insure it actualy had a squeeze in its signal sequeze object
+    # BB_recent_squeeze,
 ]
 
 list_of_signal_sequences = []
@@ -27,8 +28,8 @@ def check_signal_sequence(data, i, symbol="BTC-USD"):
     # 2️⃣ if none active -> maybe start new one
     first_func = SIGNALS[0]
     if active_seq_object is None:
-        if first_func(data, i): 
-            # make new sequence object 
+        if first_func(data, i):
+            # make new sequence object
             seq = SignalSequence(start_index=i, symbol=symbol)
             seq.active = True
             # mark first signal as triggered

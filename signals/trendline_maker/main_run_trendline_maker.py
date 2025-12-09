@@ -9,24 +9,19 @@ from .plot_trendlines import plot_clean_extrema_with_trendlines
 from .plot_candidate_lines import plot_candidate_lines
 
 
-def run_trendline_maker(segment_index=3, years=2, cluster_distance=10):
+def run_trendline_maker(cluster_distance=10):
     print("=== Running Trendline Maker Sandbox ===")
 
-    # -------------------------------------------------------
-    # LOAD DATA
-    # -------------------------------------------------------
-    # df = load_csv_from_drive("1-76wMD7XKF7IilFnRKV1bMrA2fbOlMhE")
     symbol = "BTC-USD"
-    start = "2015-01-01"
-    end = datetime.today().strftime("%Y-%m-%d")
+    segment_start = "2024-03-01"
+    segment_end = "2024-10-15"  # datetime.today().strftime("%Y-%m-%d")
 
-    df = load_yf(symbol, start, end)
-    print(df.head(5))
-    # -------------------------------------------------------
-    # SLICE DATA
-    # -------------------------------------------------------
-    df_new = df.iloc[100 * segment_index : 100 * segment_index + 365 * years].copy()
-    x = np.arange(len(df_new))
+    df = load_yf(symbol, segment_start, segment_end)
+
+    # --- DATE SLICE ---
+    df_new = df.loc[segment_start:segment_end].copy()
+    x = np.arange(len(df_new))  # numeric
+    x_dates = df_new.index  # datetime
     y = df_new["Close"].values
 
     # -------------------------------------------------------
@@ -65,6 +60,7 @@ def run_trendline_maker(segment_index=3, years=2, cluster_distance=10):
     print("\n=== Plotting final trendlines ===")
     plot_clean_extrema_with_trendlines(
         x,
+        x_dates,  # datetime
         y,
         y_s2,
         y_s5,

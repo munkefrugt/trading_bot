@@ -18,8 +18,8 @@ from signals.trendline_maker.main_run_trendline_maker import run_trendline_maker
 
 
 def main():
-    run_trendline_maker()
-    return
+    # run_trendline_maker()
+    # return
     print(
         "💬 Mr. TradeBotCoach Reminder: Before changing strategy logic, update logbook.txt and consult readchatgpt.txt."
     )

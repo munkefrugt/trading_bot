@@ -948,22 +948,26 @@ def plot_price_with_indicators(
 
     if wbb is not None:
 
-        # Bubble start, peak, end
-        for ts, val in wbb["BB_bubble_start_time"].dropna().items():
-            mark_daily_symbol(val, "BB_bubble_start_time", "square")
+        # Bubble start
+        if "BB_bubble_start_time" in wbb.columns:
+            for ts, val in wbb["BB_bubble_start_time"].dropna().items():
+                mark_daily_symbol(val, "BB_bubble_start_time", "square")
 
-        for ts, val in wbb["BB_bubble_peak_time"].dropna().items():
-            mark_daily_symbol(val, "BB_bubble_peak_time", "square-big")
+        # Bubble peak
+        if "BB_bubble_peak_time" in wbb.columns:
+            for ts, val in wbb["BB_bubble_peak_time"].dropna().items():
+                mark_daily_symbol(val, "BB_bubble_peak_time", "square-big")
 
-        for ts, val in wbb["BB_bubble_end_time"].dropna().items():
-            mark_daily_symbol(val, "BB_bubble_end_time", "x")
+        # Bubble end
+        if "BB_bubble_end_time" in wbb.columns:
+            for ts, val in wbb["BB_bubble_end_time"].dropna().items():
+                mark_daily_symbol(val, "BB_bubble_end_time", "x")
 
-        # Calm zone (tight channel weeks)
+        # Calm zone
         if "BB_tight_channel" in wbb.columns:
             for ts, val in wbb["BB_tight_channel"].fillna(False).astype(bool).items():
-                if val:
-                    if ts in data.index:
-                        data.at[ts, "BB_tight_channel"] = "dot"
+                if val and ts in data.index:
+                    data.at[ts, "BB_tight_channel"] = "dot"
 
 
     # ----------------------------------------------
