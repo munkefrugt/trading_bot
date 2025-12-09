@@ -2,7 +2,8 @@
 # Runs full trendline maker pipeline + candidate visualizer
 
 import numpy as np
-from .get_data import load_csv_from_drive
+from datetime import datetime
+from .get_data import load_csv_from_drive, load_yf
 from .trendline_pipeline import fit_trendlines_hybrid
 from .plot_trendlines import plot_clean_extrema_with_trendlines
 from .plot_candidate_lines import plot_candidate_lines
@@ -14,8 +15,13 @@ def run_trendline_maker(segment_index=3, years=2, cluster_distance=10):
     # -------------------------------------------------------
     # LOAD DATA
     # -------------------------------------------------------
-    df = load_csv_from_drive("1-76wMD7XKF7IilFnRKV1bMrA2fbOlMhE")
+    # df = load_csv_from_drive("1-76wMD7XKF7IilFnRKV1bMrA2fbOlMhE")
+    symbol = "BTC-USD"
+    start = "2015-01-01"
+    end = datetime.today().strftime("%Y-%m-%d")
 
+    df = load_yf(symbol, start, end)
+    print(df.head(5))
     # -------------------------------------------------------
     # SLICE DATA
     # -------------------------------------------------------
