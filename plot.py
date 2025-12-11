@@ -1351,6 +1351,33 @@ def plot_price_with_indicators(
             col=1,
         )
 
+        ## plot pivot lines support and resistance:
+        if "pivot_support_line" in data.columns:
+            fig.add_trace(
+                go.Scatter(
+                    x=data.index,
+                    y=data["pivot_support_line"],
+                    mode="lines",
+                    name="Pivot Support Line",
+                    line=dict(width=2, color="yellow"),
+                ),
+                row=1,
+                col=1,
+            )
+
+        if "pivot_resistance_line" in data.columns:
+            fig.add_trace(
+                go.Scatter(
+                    x=data.index,
+                    y=data["pivot_resistance_line"],
+                    mode="lines",
+                    name="Pivot Resistance Line",
+                    line=dict(width=2, color="orange"),
+                ),
+                row=1,
+                col=1,
+            )
+
     # ===========================================================
 
     # === END of helper signals ===

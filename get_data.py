@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime
 
-#examples
+# examples
 """
 Large-Cap Coins (High Liquidity, Lower Volatility)
 
@@ -34,28 +34,31 @@ Great for stress-testing stop-loss and position sizing logic.
 
     PEPE-USD (or similar) – extreme pump-and-dump profiles.
 """
-#examples:
+# examples:
 """
 NVDA
 AMD
 TSLA
 META
 """
-#YYYY-MM-DD
+# YYYY-MM-DD
 start = "2015-01-01"
 end = datetime.today().strftime("%Y-%m-%d")
-#end = "2019-01-01"
+# end = "2019-01-01"
 
 
 def fetch_btc_data(start=start, end=end, interval="1d"):
-    symbol = "BTC-USD"
-    data = yf.download(symbol, start=start, end=end, interval=interval, auto_adjust=False)
-    
+    symbol = "AMD"
+    data = yf.download(
+        symbol, start=start, end=end, interval=interval, auto_adjust=False
+    )
+
     # Flatten multi-level column names if needed
     if isinstance(data.columns, pd.MultiIndex):
         data.columns = [col[0] for col in data.columns]
-    
+
     return data
+
 
 def fetch_btc_weekly_data(start=start, end=end):
 
@@ -68,7 +71,7 @@ def extend_weekly_index(df, extra_periods=26):
     """
     df_extended = df.copy()
     last_date = df.index[-1]
-    freq = '7D'  # fixed to weekly frequency
+    freq = "7D"  # fixed to weekly frequency
     start = last_date + pd.Timedelta(days=7)
     new_dates = pd.date_range(start=start, periods=extra_periods, freq=freq)
     extension = pd.DataFrame(index=new_dates)

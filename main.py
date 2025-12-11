@@ -99,6 +99,9 @@ def main():
         "smooth_s2",
         "smooth_s5",
         "smooth_s20",
+        # pivot lines
+        "pivot_support_line",
+        "pivot_resistance_line",
     ]
 
     def ensure_columns(df: pd.DataFrame) -> pd.DataFrame:
