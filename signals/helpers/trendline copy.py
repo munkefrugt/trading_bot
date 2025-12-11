@@ -2,12 +2,13 @@
 import numpy as np
 import pandas as pd
 
+
 def build_trend_channel_for_segment(
     data: pd.DataFrame,
     i: int,
     price_col: str = "D_Close",
     smooth_col: str = "D_Close_smooth",
-    end_offset_days: int = 7*4*4,
+    end_offset_days: int = 1,
     upper_q: float = 0.90,
     lower_q: float = 0.10,
     col_mid: str = "trendln_mid",
@@ -36,7 +37,7 @@ def build_trend_channel_for_segment(
         if data.loc[data.index[i], smooth_col] < data.loc[data.index[i], col_top]:
             # skip recalculation if smooth not above channel top
             return data, False
-        
+
     # ensure float output columns exist
     for c in (col_mid, col_top, col_bot, col_resist2, col_breakout, col_breakdown):
         if c not in data.columns:
@@ -58,7 +59,7 @@ def build_trend_channel_for_segment(
     end_idx = data.index[end_pos[0]]
 
     # last start before i
-    mask = data.loc[:data.index[i], "W_SenB_Consol_Start_Price"] == True
+    mask = data.loc[: data.index[i], "W_SenB_Consol_Start_Price"] == True
     if not mask.any():
         return data, False
     start_idx = mask[mask].index[-1]
@@ -69,6 +70,8 @@ def build_trend_channel_for_segment(
     df_slice = data.loc[start_idx:end_idx]
     x = np.arange(len(df_slice))
     y = df_slice[price_col].values
+
+    # insert pivot serch here every 7 days?
 
     # regression fit
     a, b = np.polyfit(x, y, 1)
@@ -99,7 +102,7 @@ def build_trend_channel_for_segment(
 
     # extrapolate everything except bottom to i
     if end_idx < data.index[i]:
-        future_df = data.loc[end_idx:data.index[i]]
+        future_df = data.loc[end_idx : data.index[i]]
         x_future = np.arange(len(df_slice), len(df_slice) + len(future_df))
 
         mid_future = a * x_future + b
@@ -108,15 +111,17 @@ def build_trend_channel_for_segment(
         breakout_future = mid_future + breakout_off
         breakdown_future = mid_future + breakdown_off
 
-        data.loc[end_idx:data.index[i], col_mid] = mid_future
-        data.loc[end_idx:data.index[i], col_top] = top_future
-        data.loc[end_idx:data.index[i], col_resist2] = resist2_future
-        data.loc[end_idx:data.index[i], col_breakout] = breakout_future
-        data.loc[end_idx:data.index[i], col_breakdown] = breakdown_future
+        data.loc[end_idx : data.index[i], col_mid] = mid_future
+        data.loc[end_idx : data.index[i], col_top] = top_future
+        data.loc[end_idx : data.index[i], col_resist2] = resist2_future
+        data.loc[end_idx : data.index[i], col_breakout] = breakout_future
+        data.loc[end_idx : data.index[i], col_breakdown] = breakdown_future
 
     # check if smooth_col is above breakout at i
     above_breakout = False
-    if smooth_col in data.columns and not pd.isna(data.loc[data.index[i], col_breakout]):
+    if smooth_col in data.columns and not pd.isna(
+        data.loc[data.index[i], col_breakout]
+    ):
         if data.loc[data.index[i], smooth_col] > data.loc[data.index[i], col_breakout]:
             above_breakout = True
 

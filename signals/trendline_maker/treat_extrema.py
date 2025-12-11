@@ -6,7 +6,11 @@ from scipy.ndimage import gaussian_filter1d
 
 def smooth_series(y_raw):
     """Return σ2 and σ5 smoothed versions."""
-    return (gaussian_filter1d(y_raw, sigma=2), gaussian_filter1d(y_raw, sigma=5))
+    return (
+        gaussian_filter1d(y_raw, sigma=2),
+        gaussian_filter1d(y_raw, sigma=5),
+        gaussian_filter1d(y_raw, sigma=20),
+    )
 
 
 def find_local_extrema_trend_aware(y):

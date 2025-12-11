@@ -18,8 +18,8 @@ from signals.trendline_maker.main_run_trendline_maker import run_trendline_maker
 
 
 def main():
-    run_trendline_maker()
-    return
+    # run_trendline_maker()
+    # return
     print(
         "💬 Mr. TradeBotCoach Reminder: Before changing strategy logic, update logbook.txt and consult readchatgpt.txt."
     )
@@ -92,6 +92,13 @@ def main():
         "trendln_resist2",
         "trendln_breakdown",
         #####trendline columns #####
+        # pivots
+        "pivot_resistance_price",
+        "pivot_support_price",
+        # gausian smooth columns
+        "smooth_s2",
+        "smooth_s5",
+        "smooth_s20",
     ]
 
     def ensure_columns(df: pd.DataFrame) -> pd.DataFrame:

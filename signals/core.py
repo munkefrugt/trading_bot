@@ -1,3 +1,4 @@
+# signals/core.py
 from .SignalSequence import SignalSequence
 import pandas as pd
 from .senb_w_future_flat_base import senb_w_future_flat_base

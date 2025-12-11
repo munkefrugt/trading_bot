@@ -1,41 +1,40 @@
-#signals/trendline_crossings.py
+# signals/trendline_crossings.py
 import pandas as pd
 import numpy as np
+
+from signals.helpers.segments import get_segment_bounds
+from .helpers.weekly_pivot_update import weekly_pivot_update
 from .helpers.trendline import build_trend_channel_for_segment
 from .helpers.trendline_eval import trendline_eval
 
 
 def trendline_crossings(data: pd.DataFrame, i: int) -> bool:
     """
-    Builds or updates a trend channel based on the most recent consolidation start,
-    then checks for breakout conditions.
+    Builds or updates a trend channel for the active consolidation segment,
+    updates pivots every 7 days, and checks breakout conditions.
     """
 
-    # --- Find last True in W_SenB_Consol_Start_Price before index i ---
-    seg_start_time = None
-    if "W_SenB_Consol_Start_Price" in data.columns:
-        true_indices = data.index[data["W_SenB_Consol_Start_Price"] == True]
-        true_indices = true_indices[true_indices <= data.index[i]]
-        if len(true_indices) > 0:
-            seg_start_time = true_indices[-1]
-
-    if seg_start_time is None:
+    # ---- Determine segment boundaries ----
+    start_idx, end_idx = get_segment_bounds(data, i)
+    if start_idx is None:
         return False
 
-    # --- Build or extend the trend channel ---
-    data, D_Close_smooth_breakout = build_trend_channel_for_segment(data, i)
+    # ---- Update pivots only every 7th day (segment start → current i) ----
+    if i > 0 and i % 7 == 0:
+        end_ts = data.index[i]  # convert i → timestamp
+        data = weekly_pivot_update(data, start_idx, end_ts)
 
-    # --- Evaluate number of crossings ---
-    crossings = trendline_eval(
-        data,
-        start_ts=seg_start_time,
-        end_ts=data.index[i]
+    # ---- Build trend channel for segment start → segment-end ----
+    data, is_smooth_breakout = build_trend_channel_for_segment(
+        data, start_idx=start_idx, end_idx=end_idx, i=i
     )
 
-    # --- Breakout condition ---
-    if crossings > 2 and D_Close_smooth_breakout:
-        print(f"breakout (from {seg_start_time.date()})")
+    # ---- Count crossings from segment start → current row ----
+    crossings = trendline_eval(data, start_ts=start_idx, end_ts=data.index[i])
+
+    # ---- Breakout condition ----
+    if crossings > 2 and is_smooth_breakout:
+        print(f"breakout (from {start_idx.date()})")
         return True
 
     return False
-
