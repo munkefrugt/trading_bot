@@ -12,9 +12,17 @@ SIGNALS = [
     senb_w_future_slope_pct,
     # ADD well below major general  trend line condition.
     trendline_crossings,
-    # TODO. ændre trendline.py til kun at bruge toppe til at bygge trendlines.
-    # TODO insure it actualy had a squeeze in its signal sequeze object
+    # TODO 1: Fix pivot line by using TRUE peaks/troughs near current pivots
+    #        (swing highs/lows) to build a real structural top/bottom line.
+    # TODO 2: Make pivot trendline the PRIMARY breakout boundary.
+    #        Regression line becomes a secondary confirmation.
+    #        Both lines should align or behave similarly in strong channels.
+    # TODO 3: Add Weekly Chikou Span as a regime filter (only allow breakouts when clear).
+    # TODO 4: Add Bollinger Band expansion as a breakout confirmation signal
+    #        (BB squeeze → expansion required for valid breakout).
+    # TODO insure it actualy had a squeeze in its signal sequeze object? did i do that?
     # BB_recent_squeeze,
+    # ADD!! IMPORTANT! closes_over_BB,
 ]
 
 list_of_signal_sequences = []

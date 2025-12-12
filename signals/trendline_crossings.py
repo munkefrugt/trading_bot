@@ -25,7 +25,7 @@ def trendline_crossings(data: pd.DataFrame, i: int) -> bool:
     # 1) Consolidation segment boundaries
     # ----------------------------------------------------------
     start_idx, end_idx = get_segment_bounds(
-        data, i, start_offset_days=10, end_offset_days=1
+        data, i, start_offset_days=20, end_offset_days=1
     )
     if start_idx is None:
         return False
