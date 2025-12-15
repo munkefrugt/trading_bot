@@ -1,28 +1,20 @@
-# signals/trendline_crossings.py
-
 import numpy as np
 import pandas as pd
 
 from signals.helpers.segments import get_segment_bounds
 from signals.helpers.weekly_pivot_update import weekly_pivot_update
 from signals.helpers.pivot_line_builder import build_pivot_trendlines
-from .helpers.trendline import build_trend_channel_for_segment
-from .helpers.trendline_eval import trendline_eval
 
 
-def trendline_crossings(data: pd.DataFrame, i: int) -> bool:
+def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     """
-    Uses weekly pivots and pivot-based trendlines to detect breakout conditions.
-    Steps:
-      1) Determine consolidation segment (start_idx → end_idx)
-      2) Every 7th day: update pivots for (start_idx → i)
-      3) Build pivot trendlines from pivots
-      4) Build trend channel for (start_idx → end_idx)
-      5) Evaluate crossings and detect breakout
+    Detect breakout via dominant pivot resistance line.
+    Pivot structure (m, b) is stored in SignalSequence (state).
+    Pivot lines written to data are for plotting/debugging ONLY.
     """
 
     # ----------------------------------------------------------
-    # 1) Consolidation segment boundaries
+    # 1) Consolidation segment
     # ----------------------------------------------------------
     start_idx, end_idx = get_segment_bounds(
         data, i, start_offset_days=20, end_offset_days=1
@@ -30,18 +22,16 @@ def trendline_crossings(data: pd.DataFrame, i: int) -> bool:
     if start_idx is None:
         return False
 
-    # timestamp of current i
     end_ts = data.index[i]
+    check_interval = 7
 
     # ----------------------------------------------------------
-    # 2) Weekly pivot update (runs every 7 days)
+    # 2) Weekly pivot STRUCTURE update (authority)
     # ----------------------------------------------------------
-    if i > 0 and i % 7 == 0:
+    if i > 0 and i % check_interval == 0:
+
         data = weekly_pivot_update(data, start_idx, end_ts)
 
-        # ------------------------------------------------------
-        # 3) Build pivot support/resistance trendlines
-        # ------------------------------------------------------
         segment = data.loc[start_idx:end_ts]
         y_segment = segment["D_Close"].values
 
@@ -57,41 +47,60 @@ def trendline_crossings(data: pd.DataFrame, i: int) -> bool:
             y_segment, pivot_lows, pivot_highs
         )
 
-        seg_len = len(segment)
-        x = np.arange(seg_len)
-
-        # clear old values in segment
-        data.loc[start_idx:end_ts, ["pivot_support_line", "pivot_resistance_line"]] = (
-            np.nan
-        )
-
-        # Write support line
         if support_line is not None:
-            m, b = support_line
-            data.loc[start_idx:end_ts, "pivot_support_line"] = m * x + b
+            seq.helpers["pivot_support_m"], seq.helpers["pivot_support_b"] = (
+                support_line
+            )
 
-        # Write resistance line
         if resistance_line is not None:
-            m, b = resistance_line
-            data.loc[start_idx:end_ts, "pivot_resistance_line"] = m * x + b
+            seq.helpers["pivot_resistance_m"], seq.helpers["pivot_resistance_b"] = (
+                resistance_line
+            )
+
+        seq.helpers["pivot_line_last_update_i"] = i
 
     # ----------------------------------------------------------
-    # 4) Build trend channel for main consolidation window
+    # 3) Evaluate dominance EVERY BAR (logic)
     # ----------------------------------------------------------
-    data, smooth_breakout = build_trend_channel_for_segment(
-        data, start_idx=start_idx, end_idx=end_idx, i=i
-    )
+    res_m = seq.helpers.get("pivot_resistance_m")
+    res_b = seq.helpers.get("pivot_resistance_b")
+
+    if res_m is None:
+        return False
+
+    x = data.loc[start_idx:end_ts].index.get_loc(end_ts)
+    price = data.iloc[i]["D_Close"]
+    resistance_val = res_m * x + res_b
+
+    if price > resistance_val:
+        seq.helpers["trendline_crossings_count"] += 1
+    else:
+        seq.helpers["trendline_crossings_count"] = 0
 
     # ----------------------------------------------------------
-    # 5) Evaluate number of crossings within segment
+    # 4) Breakout condition
     # ----------------------------------------------------------
-    crossings = trendline_eval(data, start_ts=start_idx, end_ts=end_ts)
+    if seq.helpers["trendline_crossings_count"] >= 2:
+        seq.states_dict["trendline_crossings"] = True
+        breakout = True
+    else:
+        breakout = False
 
     # ----------------------------------------------------------
-    # Breakout condition
+    # 5) OPTIONAL: write pivot lines to data (PLOTTING ONLY)
     # ----------------------------------------------------------
-    if crossings > 2 and smooth_breakout:
-        print(f"breakout (from {start_idx.date()})")
-        return True
+    seg_idx = data.loc[start_idx:end_ts].index
+    x_vals = np.arange(len(seg_idx))
 
-    return False
+    # --- Resistance line ---
+    if res_m is not None:
+        data.loc[start_idx:end_ts, "pivot_resistance_line"] = res_m * x_vals + res_b
+
+    # --- Support line ---
+    sup_m = seq.helpers.get("pivot_support_m")
+    sup_b = seq.helpers.get("pivot_support_b")
+
+    if sup_m is not None:
+        data.loc[start_idx:end_ts, "pivot_support_line"] = sup_m * x_vals + sup_b
+
+    return breakout

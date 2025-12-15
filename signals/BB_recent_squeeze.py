@@ -4,9 +4,11 @@ import pandas as pd
 import config
 from .helpers.day_to_week import day_to_week
 
+
 def BB_recent_squeeze(
     data: pd.DataFrame,
     i: int,
+    seq,
     lookback_weeks: int = 150,
     bubble_quantile: float = 0.75,
     calm_min_weeks: int = 8,
@@ -48,7 +50,7 @@ def BB_recent_squeeze(
         return False
 
     mid = w["W_BB_Middle_20"]
-    up  = w["W_BB_Upper_20"]
+    up = w["W_BB_Upper_20"]
     low = w["W_BB_Lower_20"]
 
     width = (up - low) / mid
@@ -92,7 +94,7 @@ def BB_recent_squeeze(
         bubble_end_pos = pos
 
     bubble_start_label = w.index[bubble_start_pos]
-    bubble_end_label   = w.index[bubble_end_pos]
+    bubble_end_label = w.index[bubble_end_pos]
 
     # ---------------------- CALM ZONE ----------------------
     calm_start = bubble_end_pos
@@ -116,7 +118,9 @@ def BB_recent_squeeze(
 
     w.loc[squeeze_start_label, "BB_squeeze_start"] = True
     w.loc[squeeze_start_label, "BB_has_squeezed"] = True
-    w.loc[squeeze_start_label, "BB_squeeze_start_time"] = pd.Timestamp(squeeze_start_label)
+    w.loc[squeeze_start_label, "BB_squeeze_start_time"] = pd.Timestamp(
+        squeeze_start_label
+    )
     w.loc[squeeze_start_label, "BB_squeeze_length_weeks"] = len(calm_slice)
 
     # mark calm zone flags
@@ -125,17 +129,21 @@ def BB_recent_squeeze(
 
     # bubble metadata (for plotting / inspection)
     w.loc[bubble_start_label, "BB_bubble_start_time"] = pd.Timestamp(bubble_start_label)
-    w.loc[bubble_label,       "BB_bubble_peak_time"]  = pd.Timestamp(bubble_label)
-    w.loc[bubble_end_label,   "BB_bubble_end_time"]   = pd.Timestamp(bubble_end_label)
+    w.loc[bubble_label, "BB_bubble_peak_time"] = pd.Timestamp(bubble_label)
+    w.loc[bubble_end_label, "BB_bubble_end_time"] = pd.Timestamp(bubble_end_label)
 
     # ---------------------- DEBUG PRINTS ----------------------
     try:
         print("\n=== BB calm-zone DEBUG ===")
         print(f"Bubble threshold      : {bubble_th:.4f}")
         print(f"Bubble START          : {bubble_start_label.date()}")
-        print(f"Bubble PEAK           : {bubble_label.date()} (width={bubble_width:.4f})")
+        print(
+            f"Bubble PEAK           : {bubble_label.date()} (width={bubble_width:.4f})"
+        )
         print(f"Bubble END            : {bubble_end_label.date()}")
-        print(f"Calm zone             : {calm_slice.index[0].date()} → {calm_slice.index[-1].date()}")
+        print(
+            f"Calm zone             : {calm_slice.index[0].date()} → {calm_slice.index[-1].date()}"
+        )
         print(f"Calm mean width       : {calm_mean:.4f}")
         print(f"Calm zone length      : {len(calm_slice)} weeks")
         print("CALM detected → returning TRUE.")

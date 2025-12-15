@@ -1,28 +1,15 @@
-# signals/core.py
 from .SignalSequence import SignalSequence
-import pandas as pd
 from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
 from .trendline_crossings import trendline_crossings
 from .BB_recent_squeeze import BB_recent_squeeze
 
-# just a plain list of signal functions, simple and clear
+# plain list of signal functions
 SIGNALS = [
     senb_w_future_flat_base,
     senb_w_future_slope_pct,
-    # ADD well below major general  trend line condition.
     trendline_crossings,
-    # TODO 1: Fix pivot line by using TRUE peaks/troughs near current pivots
-    #        (swing highs/lows) to build a real structural top/bottom line.
-    # TODO 2: Make pivot trendline the PRIMARY breakout boundary.
-    #        Regression line becomes a secondary confirmation.
-    #        Both lines should align or behave similarly in strong channels.
-    # TODO 3: Add Weekly Chikou Span as a regime filter (only allow breakouts when clear).
-    # TODO 4: Add Bollinger Band expansion as a breakout confirmation signal
-    #        (BB squeeze → expansion required for valid breakout).
-    # TODO insure it actualy had a squeeze in its signal sequeze object? did i do that?
     # BB_recent_squeeze,
-    # ADD!! IMPORTANT! closes_over_BB,
 ]
 
 list_of_signal_sequences = []
@@ -31,36 +18,38 @@ list_of_signal_sequences = []
 def check_signal_sequence(data, i, symbol="BTC-USD"):
     global list_of_signal_sequences
 
-    # 1️⃣ find any active sequence or None
-    active_seq_object = next((s for s in list_of_signal_sequences if s.active), None)
+    # 1️⃣ find active sequence
+    active_seq = next((s for s in list_of_signal_sequences if s.active), None)
 
-    # 2️⃣ if none active -> maybe start new one
-    first_func = SIGNALS[0]
-    if active_seq_object is None:
-        if first_func(data, i):
-            # make new sequence object
-            seq = SignalSequence(start_index=i, symbol=symbol)
+    # ----------------------------------------------------------
+    # 2️⃣ if none active → maybe start new one
+    # ----------------------------------------------------------
+    if active_seq is None:
+        seq = SignalSequence(start_index=i, symbol=symbol)
+
+        first_func = SIGNALS[0]
+        if first_func(data, i, seq):
             seq.active = True
-            # mark first signal as triggered
             seq.states_dict[first_func] = True
-            # add to list
             list_of_signal_sequences.append(seq)
             print(f"🟢 New SignalSequence started at {data.index[i].date()}")
         return False
 
-    # 3️⃣ loop over signals and trigger next one
+    # ----------------------------------------------------------
+    # 3️⃣ advance sequence
+    # ----------------------------------------------------------
     for func in SIGNALS:
-        is_sequence_state = active_seq_object.states_dict.get(func, False)
-        if not is_sequence_state:
-            if func(data, i):
-                active_seq_object.states_dict[func] = True
+        if not active_seq.states_dict.get(func, False):
+            if func(data, i, active_seq):
+                active_seq.states_dict[func] = True
                 print(f"✅ {func.__name__} triggered at {data.index[i].date()}")
             break
 
-    # 4️⃣ check if all signals are done
-    if all(active_seq_object.states_dict.get(func, False) for func in SIGNALS):
-        active_seq_object.done = True
-        active_seq_object.active = False
+    # ----------------------------------------------------------
+    # 4️⃣ sequence complete?
+    # ----------------------------------------------------------
+    if all(active_seq.states_dict.get(func, False) for func in SIGNALS):
+        active_seq.active = False
         data.at[data.index[i], "gold_star"] = True
         print(f"🌟 GOLD STAR at {data.index[i].date()}")
         return True
