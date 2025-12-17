@@ -34,32 +34,9 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
 
         data = weekly_pivot_update(data, start_idx, end_ts)
 
-        segment = data.loc[start_idx:end_ts]
-        y_segment = segment["D_Close"].values
-
-        pivot_lows_ts = segment.index[segment["pivot_support_price"].notna()].tolist()
-        pivot_highs_ts = segment.index[
-            segment["pivot_resistance_price"].notna()
-        ].tolist()
-
-        pivot_lows = [segment.index.get_loc(ts) for ts in pivot_lows_ts]
-        pivot_highs = [segment.index.get_loc(ts) for ts in pivot_highs_ts]
-
         support_line, resistance_line = build_pivot_trendlines(
-            y_segment, pivot_lows, pivot_highs
+            data, start_idx, end_ts, seq
         )
-
-        if support_line is not None:
-            seq.helpers["pivot_support_m"], seq.helpers["pivot_support_b"] = (
-                support_line
-            )
-
-        if resistance_line is not None:
-            seq.helpers["pivot_resistance_m"], seq.helpers["pivot_resistance_b"] = (
-                resistance_line
-            )
-
-        seq.helpers["pivot_line_last_update_i"] = i
 
     # ----------------------------------------------------------
     # 3) Evaluate dominance EVERY BAR (logic)
@@ -76,23 +53,6 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     EMA_20 = data.iloc[i]["EMA_20"]
 
     resistance_val = res_m * x + res_b
-
-    # ----------------------------------------------------------
-    # 5) OPTIONAL: write pivot lines to data (PLOTTING ONLY)
-    # ----------------------------------------------------------
-    seg_idx = data.loc[start_idx:end_ts].index
-    x_vals = np.arange(len(seg_idx))
-
-    # --- Resistance line ---
-    if res_m is not None:
-        data.loc[start_idx:end_ts, "pivot_resistance_line"] = res_m * x_vals + res_b
-
-    # --- Support line ---
-    sup_m = seq.helpers.get("pivot_support_m")
-    sup_b = seq.helpers.get("pivot_support_b")
-
-    if sup_m is not None:
-        data.loc[start_idx:end_ts, "pivot_support_line"] = sup_m * x_vals + sup_b
 
     # TODO use this to qualify the trendline:
     # ADD regression trendlines
