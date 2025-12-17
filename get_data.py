@@ -48,7 +48,7 @@ end = datetime.today().strftime("%Y-%m-%d")
 
 
 def fetch_btc_data(start=start, end=end, interval="1d"):
-    symbol = "BTC-USD"
+    symbol = "NVDA"
     data = yf.download(
         symbol, start=start, end=end, interval=interval, auto_adjust=False
     )

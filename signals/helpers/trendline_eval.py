@@ -1,45 +1,70 @@
-#helpers/trendline_eval.py
+# helpers/trendline_eval.py
+import numpy as np
 import pandas as pd
+
 
 def trendline_eval(
     data: pd.DataFrame,
     start_ts: pd.Timestamp,
     end_ts: pd.Timestamp,
+    pivot_m: float,
     price_col: str = "D_Close_smooth",
     col_mid: str = "trendln_mid",
-) -> dict:
+    slope_tol: float = 0.35,
+):
     """
-    Minimal evaluation:
-    Walk through bars and count how many times price crosses the midline.
+    Evaluate trend structure on frozen regression channel.
+
+    Returns:
+        dict with:
+            - crossings
+            - reg_slope
+            - parallel
     """
 
     seg = data.loc[start_ts:end_ts]
-    if seg.empty:
+    if seg.empty or col_mid not in seg:
         return {}
 
     prices = seg[price_col].values
     mids = seg[col_mid].values
+    x = np.arange(len(mids))
 
+    # ---- regression slope from existing midline ----
+    valid = ~np.isnan(mids)
+    if valid.sum() < 5:
+        return {}
+
+    reg_m, _ = np.polyfit(x[valid], mids[valid], 1)
+
+    # ---- midline crossings (chop metric) ----
     crossings = 0
-    i = 0
-
-    # find initial state
     state = None
-    while i < len(prices) and state is None:
-        if prices[i] > mids[i]:
-            state = "above"
-        elif prices[i] < mids[i]:
-            state = "below"
-        i += 1
 
-    # walk through rest and detect flips
-    while i < len(prices):
-        if state == "above" and prices[i] < mids[i]:
+    for p, m in zip(prices, mids):
+        if np.isnan(m):
+            continue
+
+        if state is None:
+            state = "above" if p > m else "below"
+            continue
+
+        if state == "above" and p < m:
             crossings += 1
             state = "below"
-        elif state == "below" and prices[i] > mids[i]:
+        elif state == "below" and p > m:
             crossings += 1
             state = "above"
-        i += 1
 
-    return crossings
+    # ---- slope parallelism ----
+    parallel = False
+    if pivot_m is not None:
+        if np.sign(reg_m) == np.sign(pivot_m):
+            denom = max(abs(reg_m), abs(pivot_m), 1e-9)
+            parallel = abs(reg_m - pivot_m) / denom < slope_tol
+
+    return {
+        "crossings": crossings,
+        "reg_slope": reg_m,
+        "parallel": parallel,
+    }

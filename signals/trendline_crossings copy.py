@@ -1,48 +1,125 @@
-# signals/trendline_crossings.py
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+from signals.helpers.segments import get_segment_bounds
+from signals.helpers.weekly_pivot_update import weekly_pivot_update
+from signals.helpers.pivot_line_builder import build_pivot_trendlines
 from .helpers.trendline import build_trend_channel_for_segment
 from .helpers.trendline_eval import trendline_eval
-from .helpers.weekly_pivot_update import weekly_pivot_update
-from signals.helpers.segments import get_segment_bounds
 
 
-def trendline_crossings(data: pd.DataFrame, i: int) -> bool:
+def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     """
-    Builds or updates a trend channel based on the most recent consolidation start,
-    then checks for breakout conditions.
+    Detect breakout via dominant pivot resistance line.
+    Pivot structure (m, b) is stored in SignalSequence (state).
+    Pivot lines written to data are for plotting/debugging ONLY.
     """
 
-    # --- Find last True in W_SenB_Consol_Start_Price before index i ---
-    seg_start_time = None
-    if "W_SenB_Consol_Start_Price" in data.columns:
-        true_indices = data.index[data["W_SenB_Consol_Start_Price"] == True]
-        true_indices = true_indices[true_indices <= data.index[i]]
-        if len(true_indices) > 0:
-            seg_start_time = true_indices[-1]
-
-    if seg_start_time is None:
+    # ----------------------------------------------------------
+    # 1) Consolidation segment
+    # ----------------------------------------------------------
+    start_idx, end_idx = get_segment_bounds(
+        data, i, start_offset_days=20, end_offset_days=1
+    )
+    if start_idx is None:
         return False
 
-    # run this function every 7th calender day.
-    # find pivots and add to df.
-    # if a line exists and a resitance_pivot is above the line
-    # (y = mx+b)
-    #   resistance_line_m , resistance_line_b= get_resistance_pivot_line()
+    end_ts = data.index[i]
+    check_interval = 7
 
-    # TODO make the pivots works and get tehm plotet.maybe start with the gausian smooth plot
-    if i > 0 and i % 7 == 0:
-        data = weekly_pivot_update(data)
+    # ----------------------------------------------------------
+    # 2) Weekly pivot STRUCTURE update (authority)
+    # ----------------------------------------------------------
+    if i > 0 and i % check_interval == 0:
 
-    # --- Build the old trend channel ---
-    data, D_Close_smooth_breakout = build_trend_channel_for_segment(data, i)
+        data = weekly_pivot_update(data, start_idx, end_ts)
 
+        segment = data.loc[start_idx:end_ts]
+        y_segment = segment["D_Close"].values
+
+        pivot_lows_ts = segment.index[segment["pivot_support_price"].notna()].tolist()
+        pivot_highs_ts = segment.index[
+            segment["pivot_resistance_price"].notna()
+        ].tolist()
+
+        pivot_lows = [segment.index.get_loc(ts) for ts in pivot_lows_ts]
+        pivot_highs = [segment.index.get_loc(ts) for ts in pivot_highs_ts]
+
+        support_line, resistance_line = build_pivot_trendlines(
+            y_segment, pivot_lows, pivot_highs
+        )
+
+        if support_line is not None:
+            seq.helpers["pivot_support_m"], seq.helpers["pivot_support_b"] = (
+                support_line
+            )
+
+        if resistance_line is not None:
+            seq.helpers["pivot_resistance_m"], seq.helpers["pivot_resistance_b"] = (
+                resistance_line
+            )
+
+        seq.helpers["pivot_line_last_update_i"] = i
+
+    # ----------------------------------------------------------
+    # 3) Evaluate dominance EVERY BAR (logic)
+    # ----------------------------------------------------------
+    res_m = seq.helpers.get("pivot_resistance_m")
+    res_b = seq.helpers.get("pivot_resistance_b")
+
+    if res_m is None:
+        return False
+
+    x = data.loc[start_idx:end_ts].index.get_loc(end_ts)
+    price = data.iloc[i]["D_Close"]
+    EMA_9 = data.iloc[i]["EMA_9"]
+    EMA_20 = data.iloc[i]["EMA_20"]
+
+    resistance_val = res_m * x + res_b
+
+    # ----------------------------------------------------------
+    # 5) OPTIONAL: write pivot lines to data (PLOTTING ONLY)
+    # ----------------------------------------------------------
+    seg_idx = data.loc[start_idx:end_ts].index
+    x_vals = np.arange(len(seg_idx))
+
+    # --- Resistance line ---
+    if res_m is not None:
+        data.loc[start_idx:end_ts, "pivot_resistance_line"] = res_m * x_vals + res_b
+
+    # --- Support line ---
+    sup_m = seq.helpers.get("pivot_support_m")
+    sup_b = seq.helpers.get("pivot_support_b")
+
+    if sup_m is not None:
+        data.loc[start_idx:end_ts, "pivot_support_line"] = sup_m * x_vals + sup_b
+
+    # TODO use this to qualify the trendline:
+    # ADD regression trendlines
+    data, D_Close_smooth_breakout = build_trend_channel_for_segment(
+        data, start_idx=start_idx, end_idx=end_idx, i=i
+    )
     # --- Evaluate number of crossings ---
-    crossings = trendline_eval(data, start_ts=seg_start_time, end_ts=data.index[i])
+    # TODO fix! dose it evaluate the full segment or by each i?
+    eval_out = trendline_eval(
+        data,
+        start_ts=start_idx,
+        end_ts=data.index[i],
+        pivot_m=res_m,
+    )
 
-    # --- Breakout condition ---
-    if crossings > 2 and D_Close_smooth_breakout:
-        print(f"breakout (from {seg_start_time.date()})")
-        return True
+    if not eval_out:
+        return False
 
-    return False
+    crossings = eval_out["crossings"]
+    parallel_ok = eval_out["parallel"]
+
+    # ----------------------------------------------------------
+    # 4) Breakout condition
+
+    if EMA_9 > resistance_val and parallel_ok and crossings > 3:
+        breakout = True
+    else:
+        breakout = False
+
+    return breakout

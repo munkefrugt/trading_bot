@@ -26,6 +26,10 @@ class SignalSequence:
             "pivot_resistance_m": None,
             "pivot_resistance_b": None,
             "pivot_line_last_update_i": None,
+            # ---- Trend regression lock (per pivot regime) ----
+            "trend_reg_frozen": False,
+            "trend_reg_start_ts": None,
+            "trend_reg_end_ts": None,
         }
 
         self.active = False

@@ -4,6 +4,8 @@ import pandas as pd
 from signals.helpers.segments import get_segment_bounds
 from signals.helpers.weekly_pivot_update import weekly_pivot_update
 from signals.helpers.pivot_line_builder import build_pivot_trendlines
+from .helpers.trendline import build_trend_channel_for_segment
+from .helpers.trendline_eval import trendline_eval
 
 
 def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
@@ -70,21 +72,10 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
 
     x = data.loc[start_idx:end_ts].index.get_loc(end_ts)
     price = data.iloc[i]["D_Close"]
+    EMA_9 = data.iloc[i]["EMA_9"]
+    EMA_20 = data.iloc[i]["EMA_20"]
+
     resistance_val = res_m * x + res_b
-
-    if price > resistance_val:
-        seq.helpers["trendline_crossings_count"] += 1
-    else:
-        seq.helpers["trendline_crossings_count"] = 0
-
-    # ----------------------------------------------------------
-    # 4) Breakout condition
-    # ----------------------------------------------------------
-    if seq.helpers["trendline_crossings_count"] >= 2:
-        seq.states_dict["trendline_crossings"] = True
-        breakout = True
-    else:
-        breakout = False
 
     # ----------------------------------------------------------
     # 5) OPTIONAL: write pivot lines to data (PLOTTING ONLY)
@@ -102,5 +93,33 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
 
     if sup_m is not None:
         data.loc[start_idx:end_ts, "pivot_support_line"] = sup_m * x_vals + sup_b
+
+    # TODO use this to qualify the trendline:
+    # ADD regression trendlines
+    data, D_Close_smooth_breakout = build_trend_channel_for_segment(
+        data, start_idx=start_idx, end_idx=end_idx, i=i
+    )
+    # --- Evaluate number of crossings ---
+    # TODO fix! dose it evaluate the full segment or by each i?
+    eval_out = trendline_eval(
+        data,
+        start_ts=start_idx,
+        end_ts=data.index[i],
+        pivot_m=res_m,
+    )
+
+    if not eval_out:
+        return False
+
+    crossings = eval_out["crossings"]
+    parallel_ok = eval_out["parallel"]
+
+    # ----------------------------------------------------------
+    # 4) Breakout condition
+
+    if EMA_9 > resistance_val:  # and parallel_ok and crossings > 3:
+        breakout = True
+    else:
+        breakout = False
 
     return breakout
