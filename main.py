@@ -15,6 +15,7 @@ from get_data import extend_weekly_index, fetch_btc_weekly_data, fetch_btc_data
 from identify_bb_squeeze import identify_bb_squeeze_percentile
 from align_data_time import get_data_with_indicators_and_time_alignment
 from signals.trendline_maker.main_run_trendline_maker import run_trendline_maker
+from signals.core import list_of_signal_sequences
 
 
 def main():
@@ -148,6 +149,7 @@ def main():
         equity_curve=equity,
         cash_series=cash,
         weekly_data_HA=weekly_data_HA,
+        signal_sequences=list_of_signal_sequences,
     )
 
     # --- Metrics ---

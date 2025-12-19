@@ -1,3 +1,4 @@
+# signals/core.py
 from .SignalSequence import SignalSequence
 from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct

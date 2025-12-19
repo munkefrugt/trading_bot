@@ -109,17 +109,17 @@ def best_pivot_trendline(x, y, extrema, support=True):
     # ------------------------------------------------------------
     # Debug print
     # ------------------------------------------------------------
-    print("---- Multi-A Multi-B Trendline ----")
-    print(f"Regression slope: {m_reg}")
-    print(f"Candidates tested: {debug_total_candidates}")
-    print(f"Valid S/R lines: {debug_valid_lines}")
-    if best_line:
-        print(
-            f"Best A: {best_params[2]}, Best B: {best_params[3]}, Best slope: {best_params[0]}"
-        )
-    else:
-        print("NO VALID TRENDLINE FOUND")
-    print("------------------------------------")
+    # print("---- Multi-A Multi-B Trendline ----")
+    # print(f"Regression slope: {m_reg}")
+    # print(f"Candidates tested: {debug_total_candidates}")
+    # print(f"Valid S/R lines: {debug_valid_lines}")
+    # if best_line:
+    #     print(
+    #         f"Best A: {best_params[2]}, Best B: {best_params[3]}, Best slope: {best_params[0]}"
+    #     )
+    # else:
+    #     print("NO VALID TRENDLINE FOUND")
+    # print("------------------------------------")
 
     slope, intercept, A, B = best_params
 

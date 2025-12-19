@@ -2,6 +2,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
 import config
+import numpy as np
 
 
 def plot_price_with_indicators(
@@ -12,6 +13,7 @@ def plot_price_with_indicators(
     equity_curve=None,
     cash_series=None,
     weekly_data_HA=None,
+    signal_sequences=None,
 ):
     fig = make_subplots(
         rows=3,
@@ -1373,6 +1375,42 @@ def plot_price_with_indicators(
                     mode="lines",
                     name="Pivot Resistance Line",
                     line=dict(width=2, color="orange"),
+                ),
+                row=1,
+                col=1,
+            )
+
+    # plot sequences
+
+    if signal_sequences:
+        for seq in signal_sequences:
+            if not seq.helpers.get("trend_reg_frozen"):
+                continue
+
+            start_ts = seq.helpers["trend_reg_start_ts"]
+            end_ts = seq.helpers["trend_reg_end_ts"]
+            m = seq.helpers["trend_reg_m"]
+            b = seq.helpers["trend_reg_b"]
+
+            if start_ts not in data.index or end_ts not in data.index:
+                continue
+
+            segment = data.loc[start_ts:end_ts]
+            x = np.arange(len(segment))
+            y = m * x + b
+
+            fig.add_trace(
+                go.Scatter(
+                    x=segment.index,
+                    y=y,
+                    mode="lines",
+                    line=dict(
+                        color="rgba(0, 120, 255, 0.7)",
+                        width=2,
+                        dash="dot",
+                    ),
+                    name=f"Trendline {seq.id}",
+                    showlegend=False,
                 ),
                 row=1,
                 col=1,

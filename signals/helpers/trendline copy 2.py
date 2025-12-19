@@ -13,32 +13,42 @@ def build_trend_channel_for_segment(
     smooth_col: str = "D_Close_smooth",
     upper_q: float = 0.90,
     lower_q: float = 0.10,
+    # col_mid: str = "trendln_mid",
+    # col_top: str = "trendln_top",
+    # col_bot: str = "trendln_bottom",
+    # col_resist2: str = "trendln_resist2",
+    # col_breakout: str = "trendln_breakout",
+    # col_breakdown: str = "trendln_breakdown",
     return_regression: bool = False,
     extrapolate: bool = False,
 ):
     """
     Build the trend channel for the segment [start_idx : end_idx].
 
-    Writes ONLY to canonical trendline columns defined in main.py:
-        trendln_mid
-        trendln_top
-        trendln_bottom
-        trendln_resist2
-        trendln_breakout
-        trendln_breakdown
+    Adds midline regression + parallel top/bottom envelopes.
+    Extrapolates mid/top/resist2/breakout/breakdown forward to i.
 
-    Columns are assumed to already exist.
+    If return_regression=True, returns regression parameters
+    used to build the channel.
     """
 
     # --------------------------------------------------
-    # Slice segment
+    # Ensure output columns exist
     # --------------------------------------------------
+    for c in (
+        col_mid,
+        col_top,
+        col_bot,
+        col_resist2,
+        col_breakout,
+        col_breakdown,
+    ):
+        if c not in data.columns:
+            data[c] = np.nan
+
     df_slice = data.loc[start_idx:end_idx]
     y = df_slice[price_col].values
     x = np.arange(len(df_slice))
-
-    if len(x) < 2:
-        return data, False
 
     # --------------------------------------------------
     # Regression (midline)
@@ -57,7 +67,7 @@ def build_trend_channel_for_segment(
     breakdown_off = np.nanmin(resid)
 
     top = mid + up_off
-    bottom = mid + lo_off
+    bot = mid + lo_off
     resist2 = mid + r2_off
     breakout = mid + breakout_off
     breakdown = mid + breakdown_off
@@ -65,37 +75,37 @@ def build_trend_channel_for_segment(
     # --------------------------------------------------
     # Write over segment
     # --------------------------------------------------
-    data.loc[start_idx:end_idx, "trendln_mid"] = mid
-    data.loc[start_idx:end_idx, "trendln_top"] = top
-    data.loc[start_idx:end_idx, "trendln_bottom"] = bottom
-    data.loc[start_idx:end_idx, "trendln_resist2"] = resist2
-    data.loc[start_idx:end_idx, "trendln_breakout"] = breakout
-    data.loc[start_idx:end_idx, "trendln_breakdown"] = breakdown
+    data.loc[start_idx:end_idx, col_mid] = mid
+    data.loc[start_idx:end_idx, col_top] = top
+    data.loc[start_idx:end_idx, col_bot] = bot
+    data.loc[start_idx:end_idx, col_resist2] = resist2
+    data.loc[start_idx:end_idx, col_breakout] = breakout
+    data.loc[start_idx:end_idx, col_breakdown] = breakdown
 
     # --------------------------------------------------
-    # Optional extrapolation forward to i
+    # Extrapolate forward to i
     # --------------------------------------------------
-    if extrapolate and end_idx < data.index[i]:
-        future_df = data.loc[end_idx : data.index[i]]
-        x_future = np.arange(len(df_slice), len(df_slice) + len(future_df))
+    if extrapolate == True:
+        if end_idx < data.index[i]:
+            future_df = data.loc[end_idx : data.index[i]]
+            x_future = np.arange(len(df_slice), len(df_slice) + len(future_df))
 
-        mid_f = m * x_future + b
+            mid_f = m * x_future + b
 
-        data.loc[end_idx : data.index[i], "trendln_mid"] = mid_f
-        data.loc[end_idx : data.index[i], "trendln_top"] = mid_f + up_off
-        data.loc[end_idx : data.index[i], "trendln_resist2"] = mid_f + r2_off
-        data.loc[end_idx : data.index[i], "trendln_breakout"] = mid_f + breakout_off
-        data.loc[end_idx : data.index[i], "trendln_breakdown"] = mid_f + breakdown_off
+            data.loc[end_idx : data.index[i], col_mid] = mid_f
+            data.loc[end_idx : data.index[i], col_top] = mid_f + up_off
+            data.loc[end_idx : data.index[i], col_resist2] = mid_f + r2_off
+            data.loc[end_idx : data.index[i], col_breakout] = mid_f + breakout_off
+            data.loc[end_idx : data.index[i], col_breakdown] = mid_f + breakdown_off
 
     # --------------------------------------------------
-    # Backward-compat breakout flag (legacy)
+    # Breakout boolean (kept for backward compatibility)
     # --------------------------------------------------
     above_breakout = False
     if (
         smooth_col in data.columns
-        and not pd.isna(data.at[data.index[i], "trendln_breakout"])
-        and data.at[data.index[i], smooth_col]
-        > data.at[data.index[i], "trendln_breakout"]
+        and not pd.isna(data.at[data.index[i], col_breakout])
+        and data.at[data.index[i], smooth_col] > data.at[data.index[i], col_breakout]
     ):
         above_breakout = True
 
