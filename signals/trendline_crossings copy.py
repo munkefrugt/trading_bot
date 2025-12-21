@@ -1,3 +1,6 @@
+# signals/ trendline_crossings.py
+
+
 import pandas as pd
 
 from signals.helpers.segments import get_segment_bounds

@@ -26,7 +26,8 @@ class SignalSequence:
             "pivot_support_b": None,
             "pivot_resistance_m": None,
             "pivot_resistance_b": None,
-            "pivot_line_last_update_i": None,
+            "pivot_start_ts": None,
+            "pivot_end_ts": None,
             # ---- Pivot crossing (structural event) ----
             "pivot_cross_time": None,
             "pivot_cross_i": None,

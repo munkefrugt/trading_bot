@@ -1,3 +1,6 @@
+# signals/ trendline_crossings.py
+
+
 import pandas as pd
 
 from signals.helpers.segments import get_segment_bounds
@@ -146,6 +149,7 @@ def cross_back_check(
         prev_val = window.iloc[j - 1][breakout_col]
         curr_val = window.iloc[j][breakout_col]
 
+        # TODO plotting the pivot line is not working.
         if prev_val <= res_m * x_prev + res_b and curr_val > res_m * x_j + res_b:
             # store recovered cross location
             seq.helpers["recovered_cross_i"] = data.index.get_loc(ts_j)

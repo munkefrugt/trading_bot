@@ -1,4 +1,7 @@
 from plotly.subplots import make_subplots
+
+from plot_sequences import plot_signal_sequences
+
 import plotly.graph_objects as go
 import pandas as pd
 import config
@@ -1354,67 +1357,41 @@ def plot_price_with_indicators(
         )
 
         ## plot pivot lines support and resistance:
-        if "pivot_support_line" in data.columns:
-            fig.add_trace(
-                go.Scatter(
-                    x=data.index,
-                    y=data["pivot_support_line"],
-                    mode="lines",
-                    name="Pivot Support Line",
-                    line=dict(width=2, color="yellow"),
-                ),
-                row=1,
-                col=1,
-            )
+        # if "pivot_support_line" in data.columns:
+        #     fig.add_trace(
+        #         go.Scatter(
+        #             x=data.index,
+        #             y=data["pivot_support_line"],
+        #             mode="lines",
+        #             name="Pivot Support Line",
+        #             line=dict(width=2, color="yellow"),
+        #         ),
+        #         row=1,
+        #         col=1,
+        #     )
 
-        if "pivot_resistance_line" in data.columns:
-            fig.add_trace(
-                go.Scatter(
-                    x=data.index,
-                    y=data["pivot_resistance_line"],
-                    mode="lines",
-                    name="Pivot Resistance Line",
-                    line=dict(width=2, color="orange"),
-                ),
-                row=1,
-                col=1,
-            )
+        # if "pivot_resistance_line" in data.columns:
+        #     fig.add_trace(
+        #         go.Scatter(
+        #             x=data.index,
+        #             y=data["pivot_resistance_line"],
+        #             mode="lines",
+        #             name="Pivot Resistance Line",
+        #             line=dict(width=2, color="orange"),
+        #         ),
+        #         row=1,
+        #         col=1,
+        #     )
 
     # plot sequences
-
-    if signal_sequences:
-        for seq in signal_sequences:
-            if not seq.helpers.get("trend_reg_frozen"):
-                continue
-
-            start_ts = seq.helpers["trend_reg_start_ts"]
-            end_ts = seq.helpers["trend_reg_end_ts"]
-            m = seq.helpers["trend_reg_m"]
-            b = seq.helpers["trend_reg_b"]
-
-            if start_ts not in data.index or end_ts not in data.index:
-                continue
-
-            segment = data.loc[start_ts:end_ts]
-            x = np.arange(len(segment))
-            y = m * x + b
-
-            fig.add_trace(
-                go.Scatter(
-                    x=segment.index,
-                    y=y,
-                    mode="lines",
-                    line=dict(
-                        color="rgba(0, 120, 255, 0.7)",
-                        width=2,
-                        dash="dot",
-                    ),
-                    name=f"Trendline {seq.id}",
-                    showlegend=False,
-                ),
-                row=1,
-                col=1,
-            )
+    # === Signal sequences (structure overlays) ===
+    plot_signal_sequences(
+        fig=fig,
+        data=data,
+        signal_sequences=signal_sequences,
+        row=1,
+        col=1,
+    )
 
     # ===========================================================
 
