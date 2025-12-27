@@ -40,6 +40,7 @@ NVDA
 AMD
 TSLA
 META
+BRK-B
 """
 # YYYY-MM-DD
 start = "2015-01-01"
@@ -48,7 +49,7 @@ end = datetime.today().strftime("%Y-%m-%d")
 
 
 def fetch_btc_data(start=start, end=end, interval="1d"):
-    symbol = "NVDA"
+    symbol = "BTC-USD"
     data = yf.download(
         symbol, start=start, end=end, interval=interval, auto_adjust=False
     )

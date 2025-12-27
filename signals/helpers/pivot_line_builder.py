@@ -13,6 +13,8 @@ def build_pivot_trendlines(data, start_idx, end_ts, seq):
     pivot_lows = [segment.index.get_loc(ts) for ts in pivot_lows_ts]
     pivot_highs = [segment.index.get_loc(ts) for ts in pivot_highs_ts]
 
+    if pivot_highs_ts:
+        seq.helpers["last_res_pivot_ts"] = pivot_highs_ts[-1]
     x_full = np.arange(len(y_raw))
 
     support_line = None

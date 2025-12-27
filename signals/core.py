@@ -1,11 +1,12 @@
 # signals/core.py
+
 from .SignalSequence import SignalSequence
 from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
 from .trendline_crossings import trendline_crossings
 from .BB_recent_squeeze import BB_recent_squeeze
 
-# plain list of signal functions
+# ORDER MATTERS
 SIGNALS = [
     senb_w_future_flat_base,
     senb_w_future_slope_pct,
@@ -13,46 +14,80 @@ SIGNALS = [
     # BB_recent_squeeze,
 ]
 
+# global sequence storage (all symbols)
 list_of_signal_sequences = []
+
+# anti-spam (per symbol)
+MIN_BARS_BETWEEN_SEQS = 5
 
 
 def check_signal_sequence(data, i, symbol="BTC-USD"):
     global list_of_signal_sequences
 
-    # 1️⃣ find active sequence
-    active_seq = next((s for s in list_of_signal_sequences if s.active), None)
-
     # ----------------------------------------------------------
-    # 2️⃣ if none active → maybe start new one
+    # 1️⃣ Decide whether we are allowed to start a new sequence
+    #    (SYMBOL-SPECIFIC)
     # ----------------------------------------------------------
-    if active_seq is None:
-        seq = SignalSequence(start_index=i, symbol=symbol)
+    recent_active = any(
+        s.active and s.symbol == symbol and (i - s.start_index) < MIN_BARS_BETWEEN_SEQS
+        for s in list_of_signal_sequences
+    )
 
+    if not recent_active:
         first_func = SIGNALS[0]
-        if first_func(data, i, seq):
-            seq.active = True
-            seq.states_dict[first_func] = True
-            list_of_signal_sequences.append(seq)
-            print(f"🟢 New SignalSequence started at {data.index[i].date()}")
-        return False
+        new_seq = SignalSequence(start_index=i, symbol=symbol)
+
+        if first_func(data, i, new_seq):
+            new_seq.active = True
+            new_seq.states_dict[first_func] = True
+            list_of_signal_sequences.append(new_seq)
+            print(
+                f"🟢 New SignalSequence started at {data.index[i].date()} | "
+                f"symbol={symbol} | seq={new_seq.id}"
+            )
 
     # ----------------------------------------------------------
-    # 3️⃣ advance sequence
+    # 2️⃣ Advance ALL active sequences (same symbol only)
     # ----------------------------------------------------------
-    for func in SIGNALS:
-        if not active_seq.states_dict.get(func, False):
-            if func(data, i, active_seq):
-                active_seq.states_dict[func] = True
-                print(f"✅ {func.__name__} triggered at {data.index[i].date()}")
-            break
+    for seq in list_of_signal_sequences:
+        if not seq.active or seq.symbol != symbol:
+            continue
+
+        for func in SIGNALS:
+            if not seq.states_dict.get(func, False):
+                if func(data, i, seq):
+                    seq.states_dict[func] = True
+                    print(
+                        f"✅ {func.__name__} triggered at {data.index[i].date()} | "
+                        f"symbol={symbol} | seq={seq.id}"
+                    )
+                break
 
     # ----------------------------------------------------------
-    # 4️⃣ sequence complete?
+    # 3️⃣ Check if ANY sequence completed (same symbol)
     # ----------------------------------------------------------
-    if all(active_seq.states_dict.get(func, False) for func in SIGNALS):
-        active_seq.active = False
+    winners = [
+        s
+        for s in list_of_signal_sequences
+        if s.active
+        and s.symbol == symbol
+        and all(s.states_dict.get(func, False) for func in SIGNALS)
+    ]
+
+    if winners:
+        winner = winners[0]
+
         data.at[data.index[i], "gold_star"] = True
-        print(f"🌟 GOLD STAR at {data.index[i].date()}")
+        print(
+            f"🌟 GOLD STAR at {data.index[i].date()} | "
+            f"symbol={symbol} | seq={winner.id}"
+        )
+
+        # terminate only sequences for THIS symbol
+        for s in list_of_signal_sequences:
+            if s.symbol == symbol:
+                s.active = False
+
         return True
 
     return False
