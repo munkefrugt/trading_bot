@@ -1343,7 +1343,8 @@ def plot_price_with_indicators(
             row=1,
             col=1,
         )
-    if "smooth_s5" in data.columns:
+
+    if "smooth_s20" in data.columns:
         fig.add_trace(
             go.Scatter(
                 x=data.index,
@@ -1351,6 +1352,19 @@ def plot_price_with_indicators(
                 mode="lines",
                 name="Smooth σ20",
                 line=dict(width=1.5, color="green"),
+            ),
+            row=1,
+            col=1,
+        )
+
+    if "smooth_s10" in data.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=data.index,
+                y=data["smooth_s10"],
+                mode="lines",
+                name="Smooth σ10",
+                line=dict(width=1.5, color="orange"),
             ),
             row=1,
             col=1,

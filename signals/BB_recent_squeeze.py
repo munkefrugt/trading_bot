@@ -132,23 +132,5 @@ def BB_recent_squeeze(
     w.loc[bubble_label, "BB_bubble_peak_time"] = pd.Timestamp(bubble_label)
     w.loc[bubble_end_label, "BB_bubble_end_time"] = pd.Timestamp(bubble_end_label)
 
-    # ---------------------- DEBUG PRINTS ----------------------
-    try:
-        print("\n=== BB calm-zone DEBUG ===")
-        print(f"Bubble threshold      : {bubble_th:.4f}")
-        print(f"Bubble START          : {bubble_start_label.date()}")
-        print(
-            f"Bubble PEAK           : {bubble_label.date()} (width={bubble_width:.4f})"
-        )
-        print(f"Bubble END            : {bubble_end_label.date()}")
-        print(
-            f"Calm zone             : {calm_slice.index[0].date()} → {calm_slice.index[-1].date()}"
-        )
-        print(f"Calm mean width       : {calm_mean:.4f}")
-        print(f"Calm zone length      : {len(calm_slice)} weeks")
-        print("CALM detected → returning TRUE.")
-    except:
-        pass
-
     # ❗ IMPORTANT: Return True because calm zone exists
     return True

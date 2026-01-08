@@ -41,6 +41,10 @@ class SignalSequence:
             "trend_reg_b": None,
             "trend_reg_up_offset": None,
             "trend_reg_low_offset": None,
+            # ---- Active pivot-cross candidate (can update) ----
+            "active_pivot_cross_i": None,
+            "active_pivot_cross_time": None,
+            "active_pivot_cross_source": None,  # "live" | "recovered"
         }
 
         self.active = False

@@ -78,7 +78,9 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     # --------------------------------------------------
     # 4) Breakout column
     # --------------------------------------------------
-    breakout_col = "EMA_9"
+
+    # breakout_col = "EMA_9"
+    breakout_col = "D_Close"
     prev_val = data.iloc[i - 1][breakout_col]
     curr_val = data.iloc[i][breakout_col]
 
@@ -108,14 +110,16 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     # 6) Breakout condition (UNCHANGED semantics)
     # --------------------------------------------------
     #
+
+    # there is a problem with angles. maybe use vectors. im not sure how to solve it.
     is_breakout = curr_val > resistance_val  # and angle_between_lines < 10
 
-    if is_breakout and angle_between_lines is not None:
-        print(
-            f"📐 ANGLES | seq={seq.id} | "
-            f"θ_between={angle_between_lines:.1f}° | "
-            f"reg_angle={reg_angle:.1f}° | "
-            f"res_angle={res_angle:.1f}° | "
-            f"reg_m={reg_m:.5f} | res_m={res_m:.5f}"
-        )
+    # if is_breakout and angle_between_lines is not None:
+    # print(
+    #     f"📐 ANGLES | seq={seq.id} | "
+    #     f"θ_between={angle_between_lines:.1f}° | "
+    #     f"reg_angle={reg_angle:.1f}° | "
+    #     f"res_angle={res_angle:.1f}° | "
+    #     f"reg_m={reg_m:.5f} | res_m={res_m:.5f}"
+    # )
     return is_breakout

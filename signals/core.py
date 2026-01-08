@@ -5,13 +5,26 @@ from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
 from .trendline_crossings import trendline_crossings
 from .BB_recent_squeeze import BB_recent_squeeze
+from .BB_daily_close_above_weekly_upper import BB_daily_close_above_weekly_upper
+from .has_pivot_line_cross_D_close import has_pivot_line_cross_D_close
 
 # ORDER MATTERS
 SIGNALS = [
     senb_w_future_flat_base,
     senb_w_future_slope_pct,
+    # TODO fix reg line make it as long as to the breakout or around there.
+    # and use sigma 10 crossings to evaluate the regline
     trendline_crossings,
-    # BB_recent_squeeze,
+    BB_recent_squeeze,
+    has_pivot_line_cross_D_close,
+    # TODO Ichimoku warm up issue? first signal dosent show.
+    BB_daily_close_above_weekly_upper,
+    # TODO New plan:
+    # So i gotta get 2 signals. Both the signal og BB upper crossing.
+    # So something like, first there has to be have been a cross of daily and pivot line.
+    #  and then not long after (14 days)an other cross of BB upper and dailyclose cross.
+    # incorporate the recent squece into Sequence object. (maybe)
+    # also make a failsafe like if a new peak BB is made abandone signal sequence.
 ]
 
 # global sequence storage (all symbols)

@@ -40,10 +40,12 @@ def weekly_pivot_update(
     # ----------------------------------------------------------
     # 1) Smooth series
     # ----------------------------------------------------------
-    y_s2, y_s5, y_s20 = smooth_series(y_raw)
+    y_s2, y_s5, y_s10, y_s20 = smooth_series(y_raw)
 
     data.loc[start_idx:end_idx, "smooth_s2"] = y_s2
     data.loc[start_idx:end_idx, "smooth_s5"] = y_s5
+    data.loc[start_idx:end_idx, "smooth_s10"] = y_s10
+
     data.loc[start_idx:end_idx, "smooth_s20"] = y_s20
 
     # ----------------------------------------------------------

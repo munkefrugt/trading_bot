@@ -9,6 +9,7 @@ def smooth_series(y_raw):
     return (
         gaussian_filter1d(y_raw, sigma=2),
         gaussian_filter1d(y_raw, sigma=5),
+        gaussian_filter1d(y_raw, sigma=10),
         gaussian_filter1d(y_raw, sigma=20),
     )
 

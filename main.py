@@ -99,6 +99,7 @@ def main():
         # gausian smooth columns
         "smooth_s2",
         "smooth_s5",
+        "smooth_s10",
         "smooth_s20",
         # pivot lines
         "pivot_support_line",

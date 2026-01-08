@@ -44,6 +44,8 @@ BRK-B
 """
 # YYYY-MM-DD
 start = "2015-01-01"
+start = "2015-01-01"
+
 end = datetime.today().strftime("%Y-%m-%d")
 # end = "2019-01-01"
 
