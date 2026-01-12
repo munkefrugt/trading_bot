@@ -48,22 +48,6 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
         if reg is None:
             return False
 
-        # ---- store STRUCTURE in seq (not data) ----
-        seq.helpers.update(
-            {
-                "pivot_cross_i": i,
-                "pivot_cross_time": data.index[i],
-                "trend_reg_frozen": True,
-                "trend_reg_start_ts": reg.start_ts,
-                "trend_reg_end_ts": reg.end_ts,
-                "trend_reg_m": reg.m,
-                "trend_reg_b": reg.b,
-                # optional diagnostics
-                "trend_reg_up_offset": reg.up_offset,
-                "trend_reg_low_offset": reg.low_offset,
-            }
-        )
-
     # --------------------------------------------------
     # 3) Dominant resistance
     # --------------------------------------------------
@@ -85,41 +69,12 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     curr_val = data.iloc[i][breakout_col]
 
     # --------------------------------------------------
-    # 5) Slope diagnostics (OBSERVATION ONLY)
-    # --------------------------------------------------
-    reg_m = seq.helpers.get("trend_reg_m")
-    res_m = seq.helpers.get("pivot_resistance_m")
-
-    angle_between_lines = None
-
-    if reg_m is not None and res_m is not None:
-        angle_between_lines = np.degrees(
-            np.arctan(abs((res_m - reg_m) / (1 + reg_m * res_m)))
-        )
-
-    reg_angle = None
-    res_angle = None
-
-    if reg_m is not None:
-        reg_angle = np.degrees(np.arctan(reg_m))
-
-    if res_m is not None:
-        res_angle = np.degrees(np.arctan(res_m))
-
-    # --------------------------------------------------
     # 6) Breakout condition (UNCHANGED semantics)
     # --------------------------------------------------
     #
+    if curr_val > resistance_val and prev_val <= resistance_val:
+        seq.helpers["pivot_break_ts"] = data.index[i]
+        seq.helpers["pivot_break_val"] = curr_val
+        return True
 
-    # there is a problem with angles. maybe use vectors. im not sure how to solve it.
-    is_breakout = curr_val > resistance_val  # and angle_between_lines < 10
-
-    # if is_breakout and angle_between_lines is not None:
-    # print(
-    #     f"📐 ANGLES | seq={seq.id} | "
-    #     f"θ_between={angle_between_lines:.1f}° | "
-    #     f"reg_angle={reg_angle:.1f}° | "
-    #     f"res_angle={res_angle:.1f}° | "
-    #     f"reg_m={reg_m:.5f} | res_m={res_m:.5f}"
-    # )
-    return is_breakout
+    return False

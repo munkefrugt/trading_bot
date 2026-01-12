@@ -15,10 +15,10 @@ SIGNALS = [
     # TODO fix reg line make it as long as to the breakout or around there.
     # and use sigma 10 crossings to evaluate the regline
     trendline_crossings,
-    BB_recent_squeeze,
-    has_pivot_line_cross_D_close,
+    # BB_recent_squeeze,
+    # has_pivot_line_cross_D_close,
     # TODO Ichimoku warm up issue? first signal dosent show.
-    BB_daily_close_above_weekly_upper,
+    # BB_daily_close_above_weekly_upper,
     # TODO New plan:
     # So i gotta get 2 signals. Both the signal og BB upper crossing.
     # So something like, first there has to be have been a cross of daily and pivot line.
@@ -31,7 +31,7 @@ SIGNALS = [
 list_of_signal_sequences = []
 
 # anti-spam (per symbol)
-MIN_BARS_BETWEEN_SEQS = 5
+MIN_BARS_BETWEEN_SEQS = 60
 
 
 def check_signal_sequence(data, i, symbol="BTC-USD"):

@@ -52,12 +52,14 @@ def has_pivot_line_cross_D_close(
 
         # Check for real close cross
         if prev_close <= prev_res and curr_close > curr_res:
-            seq.helpers["active_pivot_cross_i"] = j
+            # seq.helpers["active_pivot_cross_i"] = j
             seq.helpers["active_pivot_cross_time"] = data.index[j]
             seq.helpers["active_pivot_cross_source"] = "recent_window"
 
             print(
-                f"📍 PIVOT CLOSE CROSS at {data.index[j].date()} | "
+                f"📍 PIVOT CLOSE CROSS | {data.index[j]} | "
+                f"D_Close={curr_close:.2f} | "
+                f"Res={curr_res:.2f} | "
                 f"symbol={seq.symbol} | seq={seq.id}"
             )
 

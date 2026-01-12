@@ -110,23 +110,23 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
             )
 
         # --------------------------------------------------
-        # 4) Pivot DAILY CLOSE cross marker (STAR)
+        # 4) Pivot line DAILY CLOSE cross marker
         # --------------------------------------------------
-        break_ts = seq.helpers.get("pivot_break_ts")
+        cross_ts = seq.helpers.get("pivot_cross_time")
 
-        if break_ts is not None and break_ts in data.index:
+        if cross_ts is not None and cross_ts in data.index:
             fig.add_trace(
                 go.Scatter(
-                    x=[break_ts],
-                    y=[data.loc[break_ts, "D_Close"]],
+                    x=[cross_ts],
+                    y=[data.loc[cross_ts, "D_Close"]],
                     mode="markers",
                     marker=dict(
                         symbol="star",
-                        size=12,
+                        size=10,
                         color="purple",
                     ),
                     showlegend=False,
-                    name=f"Breakout {seq.id}",
+                    name=f"Pivot Cross {seq.id}",
                 ),
                 row=row,
                 col=col,

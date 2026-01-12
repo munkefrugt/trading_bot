@@ -30,9 +30,8 @@ class SignalSequence:
             "pivot_end_ts": None,
             "last_res_pivot_ts": None,
             # ---- Pivot crossing (structural event) ----
-            "pivot_cross_time": None,
-            "pivot_cross_i": None,
-            "pivot_cross_source": None,  # "event" | "recovered" (diagnostic)
+            "pivot_break_val": None,
+            "pivot_break_ts": None,
             # ---- Frozen regression (per pivot regime) ----
             "trend_reg_frozen": False,
             "trend_reg_start_ts": None,
@@ -42,7 +41,7 @@ class SignalSequence:
             "trend_reg_up_offset": None,
             "trend_reg_low_offset": None,
             # ---- Active pivot-cross candidate (can update) ----
-            "active_pivot_cross_i": None,
+            # "active_pivot_cross_i": None,
             "active_pivot_cross_time": None,
             "active_pivot_cross_source": None,  # "live" | "recovered"
         }
