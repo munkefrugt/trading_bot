@@ -5,8 +5,9 @@ from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
 from .trendline_crossings import trendline_crossings
 from .BB_recent_squeeze import BB_recent_squeeze
+
 from .BB_daily_close_above_weekly_upper import BB_daily_close_above_weekly_upper
-from .has_pivot_line_cross_D_close import has_pivot_line_cross_D_close
+from .BB_cross_paired_with_trendline_cross import BB_cross_paired_with_trendline_cross
 
 # ORDER MATTERS
 SIGNALS = [
@@ -16,9 +17,10 @@ SIGNALS = [
     # and use sigma 10 crossings to evaluate the regline
     trendline_crossings,
     # BB_recent_squeeze,
-    # has_pivot_line_cross_D_close,
     # TODO Ichimoku warm up issue? first signal dosent show.
     # BB_daily_close_above_weekly_upper,
+    # BB_daily_close_above_weekly_upper,
+    BB_cross_paired_with_trendline_cross,
     # TODO New plan:
     # So i gotta get 2 signals. Both the signal og BB upper crossing.
     # So something like, first there has to be have been a cross of daily and pivot line.
