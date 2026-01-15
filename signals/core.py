@@ -8,6 +8,7 @@ from .BB_recent_squeeze import BB_recent_squeeze
 
 from .BB_daily_close_above_weekly_upper import BB_daily_close_above_weekly_upper
 from .BB_cross_paired_with_trendline_cross import BB_cross_paired_with_trendline_cross
+from .find_pivotline_cross import find_pivotline_cross
 
 # ORDER MATTERS
 SIGNALS = [
@@ -16,10 +17,9 @@ SIGNALS = [
     # TODO fix reg line make it as long as to the breakout or around there.
     # and use sigma 10 crossings to evaluate the regline
     trendline_crossings,
+    find_pivotline_cross,
     # BB_recent_squeeze,
     # TODO Ichimoku warm up issue? first signal dosent show.
-    # BB_daily_close_above_weekly_upper,
-    # BB_daily_close_above_weekly_upper,
     BB_cross_paired_with_trendline_cross,
     # TODO New plan:
     # So i gotta get 2 signals. Both the signal og BB upper crossing.

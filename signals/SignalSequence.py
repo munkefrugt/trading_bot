@@ -21,6 +21,8 @@ class SignalSequence:
 
         # Persistent STRUCTURAL state (not observations)
         self.helpers = {
+            # ---- BB pair cross with pivot line ---
+            "bb_pivot_pair_ts": None,
             # ---- Pivot regime ----
             "pivot_support_m": None,
             "pivot_support_b": None,

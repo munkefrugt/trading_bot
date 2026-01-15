@@ -10,6 +10,7 @@ from calc_indicators import (
     compute_bollinger_bands,
     compute_HMA,
     compute_ATR,
+    add_weekly_senkou_b_slope_features,
 )
 from get_data import extend_weekly_index, fetch_btc_weekly_data, fetch_btc_data
 from identify_bb_squeeze import identify_bb_squeeze_percentile
@@ -24,12 +25,16 @@ def main():
     print(
         "💬 Mr. TradeBotCoach Reminder: Before changing strategy logic, update logbook.txt and consult readchatgpt.txt."
     )
-
+    daily = fetch_btc_data()
+    config.daily_data = daily
     # --- Weekly context (in config) ---
-    weekly_data = fetch_btc_weekly_data().add_prefix("W_")
+    weekly_data = fetch_btc_weekly_data()
     config.weekly_data = weekly_data
-    config.weekly_data_HA = compute_heikin_ashi(weekly_data, prefix="W_", weekly=True)
-    weekly_data_HA = config.weekly_data_HA
+    weekly_extended = extend_weekly_index(weekly_data)
+    # config.weekly_data_HA = compute_heikin_ashi(weekly_data, prefix="W_", weekly=True)
+    # weekly_data_HA = config.weekly_data_HA
+    config.ichimoku_weekly = compute_ichimoku(weekly_extended, prefix="W_", weekly=True)
+    config.ichimoku_weekly = add_weekly_senkou_b_slope_features(config.ichimoku_weekly)
 
     config.weekly_bb = compute_bollinger_bands(
         weekly_data, period=20, std_dev=2, prefix="W_"
@@ -149,7 +154,7 @@ def main():
         trades=trades,
         equity_curve=equity,
         cash_series=cash,
-        weekly_data_HA=weekly_data_HA,
+        # weekly_data_HA=weekly_data_HA,
         signal_sequences=list_of_signal_sequences,
     )
 

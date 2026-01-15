@@ -25,8 +25,8 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     start_idx, end_idx = get_segment_bounds(
         data, i, start_offset_days=20, end_offset_days=1
     )
-    if start_idx is None or i == 0:
-        return False
+    # if start_idx is None or i == 0:
+    #    return False
 
     end_ts = data.index[i]
 
@@ -37,23 +37,17 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
         data = weekly_pivot_update(data, start_idx, end_ts)
         build_pivot_trendlines(data, start_idx, end_ts, seq)
 
-        end_ts_reg = seq.helpers.get("last_res_pivot_ts")
-        if end_ts_reg is not None:
-            reg = find_trend_regression(
-                data,
-                start_ts=start_idx,
-                end_ts=end_ts_reg,
-            )
-
-        if reg is None:
-            return False
-
     # --------------------------------------------------
     # 3) Dominant resistance
     # --------------------------------------------------
+
     res_m = seq.helpers.get("pivot_resistance_m")
     res_b = seq.helpers.get("pivot_resistance_b")
     if res_m is None:
+        ts = data.index[i]
+
+        if ts.strftime("%Y-%m-%d") in ["2023-10-22", "2023-10-23"]:
+            print(res_m)
         return False
 
     x = data.loc[start_idx:end_ts].index.get_loc(end_ts)
@@ -72,9 +66,7 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     # 6) Breakout condition (UNCHANGED semantics)
     # --------------------------------------------------
     #
-    if curr_val > resistance_val and prev_val <= resistance_val:
-        seq.helpers["pivot_break_ts"] = data.index[i]
-        seq.helpers["pivot_break_val"] = curr_val
+    if curr_val > resistance_val:
         return True
 
     return False

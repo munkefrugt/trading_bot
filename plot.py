@@ -70,6 +70,21 @@ def plot_price_with_indicators(
             col=1,
         )
 
+    # === Weekly Close ===
+    fig.add_trace(
+        go.Scatter(
+            x=config.weekly_data.index,
+            y=config.weekly_data["W_Close"],
+            mode="lines",
+            name="Weekly Close",
+            line=dict(color="green", width=1.5),
+            opacity=0.8,
+            visible="legendonly",
+        ),
+        row=1,
+        col=1,
+    )
+
     # === Weekly price candlesticks ===
     if all(col in data.columns for col in ["W_Open", "W_High", "W_Low", "W_Close"]):
         fig.add_trace(

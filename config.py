@@ -1,4 +1,5 @@
 # config.py
+daily_data = None
 weekly_data = None
 
 ichimoku_weekly = None  # will hold your DataFrame

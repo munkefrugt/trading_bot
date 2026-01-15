@@ -131,3 +131,26 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
                 row=row,
                 col=col,
             )
+
+        # --------------------------------------------------
+        #  Paired WEEKLY BB ↔ PIVOT marker
+        # --------------------------------------------------
+        pair_ts = seq.helpers.get("bb_pivot_pair_ts")
+
+        if pair_ts is not None and pair_ts in data.index:
+            fig.add_trace(
+                go.Scatter(
+                    x=[pair_ts],
+                    y=[data.loc[pair_ts, "D_Close"]],
+                    mode="markers",
+                    marker=dict(
+                        symbol="diamond",
+                        size=11,
+                        color="orange",
+                    ),
+                    showlegend=False,
+                    name=f"BB↔Pivot {seq.id}",
+                ),
+                row=row,
+                col=col,
+            )

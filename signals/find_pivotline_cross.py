@@ -18,7 +18,6 @@ def find_pivotline_cross(
     - close-based cross
     - minimal guards
     """
-
     # --------------------------------------------------
     # 1) Require pivot resistance
     # --------------------------------------------------
@@ -42,11 +41,6 @@ def find_pivotline_cross(
         x_prev = (j - 1) - pivot_start_i
         x_curr = j - pivot_start_i
 
-        if x_prev < 0 or x_curr < 0:
-            j -= 1
-            days_checked += 1
-            continue
-
         prev_res = res_m * x_prev + res_b
         curr_res = res_m * x_curr + res_b
 
@@ -55,23 +49,23 @@ def find_pivotline_cross(
 
         if prev_close <= prev_res and curr_close > curr_res:
 
-            print("------ PIVOT CROSS DEBUG ------")
-            print(f"symbol        : {seq.symbol}")
-            print(f"seq id        : {seq.id}")
-            print(f"event date   : {data.index[j].date()}")
-            print(f"prev close   : {prev_close:.2f}")
-            print(f"prev pivot y : {prev_res:.2f}")
-            print(f"curr close   : {curr_close:.2f}")
-            print(f"curr pivot y : {curr_res:.2f}")
-            print("--------------------------------")
+            #     print("------ PIVOT CROSS DEBUG ------")
+            #     print(f"symbol        : {seq.symbol}")
+            #     print(f"seq id        : {seq.id}")
+            #     print(f"event date   : {data.index[j].date()}")
+            #     print(f"prev close   : {prev_close:.2f}")
+            #     print(f"prev pivot y : {prev_res:.2f}")
+            #     print(f"curr close   : {curr_close:.2f}")
+            #     print(f"curr pivot y : {curr_res:.2f}")
+            #     print("--------------------------------")
 
-            seq.helpers["pivot_cross_i"] = j
-            seq.helpers["pivot_cross_time"] = data.index[j]
+            seq.helpers["pivot_break_ts"] = data.index[j]
+            seq.helpers["pivot_break_val"] = curr_close
 
-            print(
-                f"📍 PIVOT CLOSE CROSS at {data.index[j].date()} | "
-                f"symbol={seq.symbol} | seq={seq.id}"
-            )
+            # print(
+            #     f"📍 PIVOT CLOSE CROSS at {data.index[j].date()} | "
+            #     f"symbol={seq.symbol} | seq={seq.id}"
+            # )
 
             return True
 

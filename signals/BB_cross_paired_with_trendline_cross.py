@@ -81,10 +81,15 @@ def BB_cross_paired_with_trendline_cross(
     if 0 < days_after_pivot <= max_pair_days:
         seq.helpers["bb_pivot_pair_days"] = days_after_pivot
 
+        seq.helpers["bb_pivot_pair_ts"] = bb_ts
+
         print(
             f"🔗 WEEKLY BB ↔ PIVOT PAIRED | "
             f"pivot={pivot_ts.date()} | "
             f"bb_week={bb_ts.date()} | "
+            f"W_Close={seq.helpers.get('bb_weekly_break_close'):.2f} | "
+            f"W_BB_Upper={seq.helpers.get('bb_weekly_break_upper'):.2f} | "
+            f"Δ={seq.helpers.get('bb_weekly_break_close') - seq.helpers.get('bb_weekly_break_upper'):.2f} | "
             f"Δ_days={days_after_pivot} | "
             f"seq={seq.id}"
         )
