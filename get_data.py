@@ -7,10 +7,10 @@ import config
 
 # YYYY-MM-DD
 start = "2015-01-01"
-end = "2023-11-05"  # (debug cross)
+# end = "2023-11-05"  # (debug cross)
 # end = "2023-06-21"
 
-# end = datetime.today().strftime("%Y-%m-%d")
+end = datetime.today().strftime("%Y-%m-%d")
 
 
 def fetch_btc_data(start=start, end=end, interval="1d"):

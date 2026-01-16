@@ -3,7 +3,7 @@
 from .SignalSequence import SignalSequence
 from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
-from .trendline_crossings import trendline_crossings
+from .trendline_breakout import trendline_breakout
 from .BB_recent_squeeze import BB_recent_squeeze
 from .BB_daily_close_above_weekly_upper import BB_daily_close_above_weekly_upper
 
@@ -13,7 +13,7 @@ SIGNALS = [
     senb_w_future_slope_pct,
     # TODO fix reg line make it as long as to the breakout or around there.
     # and use sigma 10 crossings to evaluate the regline
-    trendline_crossings,
+    trendline_breakout,
     # BB_recent_squeeze,
     # TODO BB_daily_close_above_weekly_upper dosent work
     # BB_daily_close_above_weekly_upper,

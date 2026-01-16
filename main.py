@@ -143,6 +143,7 @@ def main():
     # --- Run backtest ---
     data, buys, sells, trades, equity, cash = run_backtest(data)
     print(f"{len(buys)} buy signals, {len(sells)} sell signals")
+    print(f"📦 Total SignalSequences created: {len(list_of_signal_sequences)}")
 
     # --- Plot ---
 
@@ -163,7 +164,7 @@ def main():
     analyze_performance(trades)
     print_return_distribution(trades)
 
-    df_slope = config.ichimoku_weekly["W_Senkou_span_B_slope_pct"]
+    # df_slope = config.ichimoku_weekly["W_Senkou_span_B_slope_pct"]
 
 
 if __name__ == "__main__":

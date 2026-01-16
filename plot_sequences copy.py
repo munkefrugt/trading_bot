@@ -110,23 +110,46 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
             )
 
         # --------------------------------------------------
-        # 4) Pivot line DAILY CLOSE cross marker
+        # 4) Pivot DAILY CLOSE cross marker (STAR)
         # --------------------------------------------------
-        cross_ts = seq.helpers.get("pivot_cross_time")
+        break_ts = seq.helpers.get("pivot_break_ts")
 
-        if cross_ts is not None and cross_ts in data.index:
+        if break_ts is not None and break_ts in data.index:
             fig.add_trace(
                 go.Scatter(
-                    x=[cross_ts],
-                    y=[data.loc[cross_ts, "D_Close"]],
+                    x=[break_ts],
+                    y=[data.loc[break_ts, "D_Close"]],
                     mode="markers",
                     marker=dict(
                         symbol="star",
-                        size=10,
+                        size=12,
                         color="purple",
                     ),
                     showlegend=False,
-                    name=f"Pivot Cross {seq.id}",
+                    name=f"Breakout {seq.id}",
+                ),
+                row=row,
+                col=col,
+            )
+
+        # --------------------------------------------------
+        #  Paired WEEKLY BB ↔ PIVOT marker
+        # --------------------------------------------------
+        pair_ts = seq.helpers.get("bb_pivot_pair_ts")
+
+        if pair_ts is not None and pair_ts in data.index:
+            fig.add_trace(
+                go.Scatter(
+                    x=[pair_ts],
+                    y=[data.loc[pair_ts, "D_Close"]],
+                    mode="markers",
+                    marker=dict(
+                        symbol="diamond",
+                        size=11,
+                        color="orange",
+                    ),
+                    showlegend=False,
+                    name=f"BB↔Pivot {seq.id}",
                 ),
                 row=row,
                 col=col,

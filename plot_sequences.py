@@ -16,7 +16,7 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
     for seq in signal_sequences:
 
         # --------------------------------------------------
-        # 1) Frozen trend regression
+        # 1) Frozen trend regression + diagnostics
         # --------------------------------------------------
         if seq.helpers.get("trend_reg_frozen"):
 
@@ -28,12 +28,13 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
             if m is not None and start_ts in data.index and end_ts in data.index:
                 segment = data.loc[start_ts:end_ts]
                 x = np.arange(len(segment))
-                y = m * x + b
+                reg_y = m * x + b
 
+                # --- regression line ---
                 fig.add_trace(
                     go.Scatter(
                         x=segment.index,
-                        y=y,
+                        y=reg_y,
                         mode="lines",
                         line=dict(
                             color="rgba(0, 120, 255, 0.7)",
@@ -46,6 +47,51 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
                     row=row,
                     col=col,
                 )
+
+                # --- Gaussian smooth ---
+                smooth_col = "gauss_10"
+                if smooth_col in segment.columns:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=segment.index,
+                            y=segment[smooth_col],
+                            mode="lines",
+                            line=dict(
+                                color="rgba(160, 160, 160, 0.9)",
+                                width=1.5,
+                            ),
+                            showlegend=False,
+                            name=f"Smooth {seq.id}",
+                        ),
+                        row=row,
+                        col=col,
+                    )
+
+                # --- regline ↔ smooth crossings ---
+                cross_ts = seq.helpers.get("trend_reg_cross_ts")
+
+                if cross_ts:
+                    # keep only crossings inside the plotted segment
+                    cross_ts = [ts for ts in cross_ts if ts in segment.index]
+
+                    cross_y = segment.loc[cross_ts, smooth_col]
+
+                    fig.add_trace(
+                        go.Scatter(
+                            x=cross_ts,
+                            y=cross_y,
+                            mode="markers",
+                            marker=dict(
+                                symbol="x",
+                                size=8,
+                                color="black",
+                            ),
+                            showlegend=False,
+                            name=f"Reg crosses {seq.id}",
+                        ),
+                        row=row,
+                        col=col,
+                    )
 
         # --------------------------------------------------
         # 2) Pivot resistance
@@ -110,7 +156,7 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
             )
 
         # --------------------------------------------------
-        # 4) Pivot DAILY CLOSE cross marker (STAR)
+        # 4) Pivot DAILY CLOSE cross marker
         # --------------------------------------------------
         break_ts = seq.helpers.get("pivot_break_ts")
 
@@ -133,7 +179,7 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
             )
 
         # --------------------------------------------------
-        #  Paired WEEKLY BB ↔ PIVOT marker
+        # 5) Paired WEEKLY BB ↔ PIVOT marker
         # --------------------------------------------------
         pair_ts = seq.helpers.get("bb_pivot_pair_ts")
 

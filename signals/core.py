@@ -3,12 +3,12 @@
 from .SignalSequence import SignalSequence
 from .senb_w_future_flat_base import senb_w_future_flat_base
 from .senb_w_future_slope_pct import senb_w_future_slope_pct
-from .trendline_crossings import trendline_crossings
+from .trendline_breakout import trendline_breakout
 from .BB_recent_squeeze import BB_recent_squeeze
 
-from .BB_daily_close_above_weekly_upper import BB_daily_close_above_weekly_upper
 from .BB_cross_paired_with_trendline_cross import BB_cross_paired_with_trendline_cross
 from .find_pivotline_cross import find_pivotline_cross
+from .evaluate_regline import evaluate_regline
 
 # ORDER MATTERS
 SIGNALS = [
@@ -16,9 +16,10 @@ SIGNALS = [
     senb_w_future_slope_pct,
     # TODO fix reg line make it as long as to the breakout or around there.
     # and use sigma 10 crossings to evaluate the regline
-    trendline_crossings,
+    trendline_breakout,
     find_pivotline_cross,
-    # BB_recent_squeeze,
+    evaluate_regline,
+    BB_recent_squeeze,
     # TODO Ichimoku warm up issue? first signal dosent show.
     BB_cross_paired_with_trendline_cross,
     # TODO New plan:

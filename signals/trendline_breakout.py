@@ -9,7 +9,7 @@ from signals.helpers.pivot_line_builder import build_pivot_trendlines
 from signals.helpers.trend_regression import find_trend_regression
 
 
-def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
+def trendline_breakout(data: pd.DataFrame, i: int, seq) -> bool:
     """
     Detect breakout via dominant pivot resistance line.
 
@@ -25,6 +25,7 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     start_idx, end_idx = get_segment_bounds(
         data, i, start_offset_days=20, end_offset_days=1
     )
+
     # if start_idx is None or i == 0:
     #    return False
 
@@ -67,6 +68,8 @@ def trendline_crossings(data: pd.DataFrame, i: int, seq) -> bool:
     # --------------------------------------------------
     #
     if curr_val > resistance_val:
+        if seq.helpers.get("segment_start_ts") is None:
+            seq.helpers["segment_start_ts"] = start_idx
         return True
 
     return False
