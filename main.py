@@ -12,11 +12,16 @@ from calc_indicators import (
     compute_ATR,
     add_weekly_senkou_b_slope_features,
 )
-from get_data import extend_weekly_index, fetch_btc_weekly_data, fetch_btc_data
 from identify_bb_squeeze import identify_bb_squeeze_percentile
 from align_data_time import get_data_with_indicators_and_time_alignment
 from signals.trendline_maker.main_run_trendline_maker import run_trendline_maker
 from signals.core import list_of_signal_sequences
+
+from get_data import (
+    fetch_daily_data,
+    fetch_weekly_data_from_daily,
+    extend_weekly_index,
+)
 
 
 def main():
@@ -25,10 +30,10 @@ def main():
     print(
         "💬 Mr. TradeBotCoach Reminder: Before changing strategy logic, update logbook.txt and consult readchatgpt.txt."
     )
-    daily = fetch_btc_data()
+    daily = fetch_daily_data()
     config.daily_data = daily
     # --- Weekly context (in config) ---
-    weekly_data = fetch_btc_weekly_data()
+    weekly_data = fetch_weekly_data_from_daily()
     config.weekly_data = weekly_data
     weekly_extended = extend_weekly_index(weekly_data)
     # config.weekly_data_HA = compute_heikin_ashi(weekly_data, prefix="W_", weekly=True)

@@ -10,14 +10,14 @@ def evaluate_regline(
     i: int,
     seq,
     price_col: str = "D_Close",
-    smooth_col: str = "gauss_10",
+    smooth_col: str = "smooth_s10",
 ) -> bool:
     """
     Freeze a regression line from segment start to pivot breakout
     and record regline ↔ smooth crossings (timestamps only).
 
-    Geometry + observation only.
-    No thresholds, no decisions.
+    Geometry + observation.
+    Advances the sequence ONLY if enough crossings exist.
     """
 
     # --------------------------------------------------
@@ -55,14 +55,14 @@ def evaluate_regline(
     seq.helpers["trend_reg_b"] = reg.b
 
     # --------------------------------------------------
-    # 4) Count crossings vs smooth (timestamps)
+    # 4) Count crossings vs smooth
     # --------------------------------------------------
     segment = data.loc[start_ts:end_ts]
 
     if smooth_col not in segment.columns:
         seq.helpers["trend_reg_cross_ts"] = []
         seq.helpers["trend_reg_cross_count"] = 0
-        return True
+        return False
 
     x = np.arange(len(segment))
     reg_vals = reg.m * x + reg.b
@@ -70,14 +70,21 @@ def evaluate_regline(
 
     diff = smooth_vals - reg_vals
     signs = np.sign(diff)
+    signs[signs == 0] = np.nan  # avoid fake crossings
 
-    cross_idx = np.where(signs[1:] * signs[:-1] < 0)[0] + 1
+    valid = ~np.isnan(signs[1:]) & ~np.isnan(signs[:-1])
+    cross_idx = np.where(valid & (signs[1:] * signs[:-1] < 0))[0] + 1
     cross_ts = segment.index[cross_idx].tolist()
 
     # --------------------------------------------------
-    # 5) Store crossing info for plotting / later logic
+    # 5) Store geometry + crossing info
     # --------------------------------------------------
+    seq.helpers["trend_reg_x"] = x
+    seq.helpers["trend_reg_y"] = reg_vals
     seq.helpers["trend_reg_cross_ts"] = cross_ts
     seq.helpers["trend_reg_cross_count"] = len(cross_ts)
 
-    return True
+    # --------------------------------------------------
+    # 6) Gate: require sufficient interaction with regline
+    # --------------------------------------------------
+    return len(cross_ts) >= 4

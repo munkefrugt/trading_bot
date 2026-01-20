@@ -5,52 +5,83 @@ import pandas as pd
 from datetime import datetime
 import config
 
-# YYYY-MM-DD
-start = "2015-01-01"
-# end = "2023-11-05"  # (debug cross)
-# end = "2023-06-21"
+"""
+stocks
+"AAPL"
+"TSLA"
+"NVDA"
+"AMD"
+"MSFT"
+"AMZN"
+"META"
+"GOOGL"
+"NFLX"
+"AVGO"
+"BRK-B"
 
-end = datetime.today().strftime("%Y-%m-%d")
+crypto
+"BTC-USD"
+"ETH-USD"
+"SOL-USD"
+"LINK-USD"
+"XRP-USD"
+"ADA-USD"
+"LTC-USD"
+"""
+# =========================
+# Date range
+# =========================
+START_DATE = "2010-01-01"
+END_DATE = datetime.today().strftime("%Y-%m-%d")
 
 
-def fetch_btc_data(start=start, end=end, interval="1d"):
+# =========================
+# Daily data (single source of truth)
+# =========================
+def fetch_daily_data(start=START_DATE, end=END_DATE, interval="1d"):
+    # symbol = "AAPL"
+    symbol = "BTC-USD"
     """
     Fetch DAILY data only.
-    This is the single source of truth.
+    This is the single source of truth for all higher timeframes.
     """
-    symbol = "BTC-USD"
-
     data = yf.download(
         symbol,
         start=start,
         end=end,
         interval=interval,
         auto_adjust=False,
+        progress=True,
     )
 
-    # Flatten multi-level column names if needed
+    if data.empty:
+        raise RuntimeError(f"No daily data returned for symbol: {symbol}")
+
+    # Flatten multi-index columns if present
     if isinstance(data.columns, pd.MultiIndex):
         data.columns = [col[0] for col in data.columns]
 
     return data
 
 
-def fetch_btc_weekly_data(anchor="W-THU", min_days=6):
+# =========================
+# Weekly data (derived from daily)
+# =========================
+def fetch_weekly_data_from_daily(anchor="W-THU", min_days=5):
     """
     FAIL-SAFE weekly data builder.
 
-    This function NO LONGER downloads weekly data.
-    It derives weekly data from config.daily_data ONLY.
-
-    If daily data is missing → crash loudly.
+    - Never downloads weekly data
+    - Always derives from config.daily_data
+    - Drops clearly partial weeks
     """
 
     daily = getattr(config, "daily_data", None)
 
-    if daily is None:
+    if daily is None or daily.empty:
         raise RuntimeError(
-            "fetch_btc_weekly_data() called before daily data exists.\n"
-            "Weekly data MUST be derived from daily data to avoid lookahead."
+            "Weekly data requested before daily data exists.\n"
+            "Daily data must be fetched first."
         )
 
     weekly = daily.resample(anchor).agg(
@@ -62,22 +93,36 @@ def fetch_btc_weekly_data(anchor="W-THU", min_days=6):
         W_Count=("Close", "count"),
     )
 
-    # 🔒 HARD RULE: drop partial weeks
+    # Drop partial / broken weeks
     weekly = weekly[weekly["W_Count"] >= min_days]
+
+    if weekly.empty:
+        raise RuntimeError(
+            "Weekly data is empty after resampling.\n"
+            "Try lowering min_days or check daily data continuity."
+        )
 
     return weekly
 
 
+# =========================
+# Weekly index extension (Ichimoku-safe)
+# =========================
 def extend_weekly_index(df, extra_periods=26):
     """
-    Extend weekly DataFrame index with future periods
-    for forward-shifted indicators (e.g. Ichimoku cloud).
+    Extend weekly index forward so forward-shifted indicators
+    (e.g. Ichimoku Senkou spans) have space to live.
     """
+
+    if df.empty:
+        return df
+
     df_extended = df.copy()
-    last_date = df.index[-1]
+    last_date = df_extended.index[-1]
 
     start = last_date + pd.Timedelta(days=7)
-    new_dates = pd.date_range(start=start, periods=extra_periods, freq="7D")
+    future_index = pd.date_range(start=start, periods=extra_periods, freq="7D")
 
-    extension = pd.DataFrame(index=new_dates)
+    extension = pd.DataFrame(index=future_index)
+
     return pd.concat([df_extended, extension])

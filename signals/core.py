@@ -19,15 +19,11 @@ SIGNALS = [
     trendline_breakout,
     find_pivotline_cross,
     evaluate_regline,
+    # TODO incorporate the recent squece into Sequence object. (maybe)
     BB_recent_squeeze,
     # TODO Ichimoku warm up issue? first signal dosent show.
     BB_cross_paired_with_trendline_cross,
-    # TODO New plan:
-    # So i gotta get 2 signals. Both the signal og BB upper crossing.
-    # So something like, first there has to be have been a cross of daily and pivot line.
-    #  and then not long after (14 days)an other cross of BB upper and dailyclose cross.
-    # incorporate the recent squece into Sequence object. (maybe)
-    # also make a failsafe like if a new peak BB is made abandone signal sequence.
+    # TODO also make a failsafe like if a new peak BB is made abandone signal sequence.
 ]
 
 # global sequence storage (all symbols)

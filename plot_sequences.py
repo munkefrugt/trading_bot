@@ -20,15 +20,25 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
         # --------------------------------------------------
         if seq.helpers.get("trend_reg_frozen"):
 
-            start_ts = seq.helpers["trend_reg_start_ts"]
-            end_ts = seq.helpers["trend_reg_end_ts"]
-            m = seq.helpers["trend_reg_m"]
-            b = seq.helpers["trend_reg_b"]
+            start_ts = seq.helpers.get("trend_reg_start_ts")
+            end_ts = seq.helpers.get("trend_reg_end_ts")
+            m = seq.helpers.get("trend_reg_m")
+            b = seq.helpers.get("trend_reg_b")
 
-            if m is not None and start_ts in data.index and end_ts in data.index:
+            if (
+                m is not None
+                and start_ts is not None
+                and end_ts is not None
+                and start_ts in data.index
+                and end_ts in data.index
+            ):
                 segment = data.loc[start_ts:end_ts]
-                x = np.arange(len(segment))
-                reg_y = m * x + b
+
+                # prefer cached regline values
+                reg_y = seq.helpers.get("trend_reg_y")
+                if reg_y is None:
+                    x = np.arange(len(segment))
+                    reg_y = m * x + b
 
                 # --- regression line ---
                 fig.add_trace(
@@ -49,7 +59,7 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
                 )
 
                 # --- Gaussian smooth ---
-                smooth_col = "gauss_10"
+                smooth_col = "smooth_s10"
                 if smooth_col in segment.columns:
                     fig.add_trace(
                         go.Scatter(
@@ -68,13 +78,15 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
                     )
 
                 # --- regline ↔ smooth crossings ---
-                cross_ts = seq.helpers.get("trend_reg_cross_ts")
+                cross_ts = seq.helpers.get("trend_reg_cross_ts", [])
 
                 if cross_ts:
-                    # keep only crossings inside the plotted segment
                     cross_ts = [ts for ts in cross_ts if ts in segment.index]
 
-                    cross_y = segment.loc[cross_ts, smooth_col]
+                    if smooth_col in segment.columns:
+                        cross_y = segment.loc[cross_ts, smooth_col]
+                    else:
+                        cross_y = segment.loc[cross_ts, "D_Close"]
 
                     fig.add_trace(
                         go.Scatter(
