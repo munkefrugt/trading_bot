@@ -31,7 +31,7 @@ crypto
 # =========================
 # Date range
 # =========================
-START_DATE = "2010-01-01"
+START_DATE = "2000-01-01"
 END_DATE = datetime.today().strftime("%Y-%m-%d")
 
 
@@ -40,7 +40,17 @@ END_DATE = datetime.today().strftime("%Y-%m-%d")
 # =========================
 def fetch_daily_data(start=START_DATE, end=END_DATE, interval="1d"):
     # symbol = "AAPL"
-    symbol = "BTC-USD"
+    # symbol = "BRK-B"
+    # symbol = "BTC-USD"
+    # symbol = "ADA-USD"
+    # symbol = "LINK-USD" (good swingtrader)
+
+    symbol = "GLD"  # gold ETF (to many sequences running)
+    # symbol = "BTC-USD"
+    symbol = "GOOGL"
+    symbol = "BRK-B"
+    symbol = "ADA-USD"
+
     """
     Fetch DAILY data only.
     This is the single source of truth for all higher timeframes.

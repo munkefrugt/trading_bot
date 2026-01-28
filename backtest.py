@@ -6,8 +6,9 @@ from buy import buy_check
 import pandas as pd
 import numpy as np
 from signals.core import check_signal_sequence
-from signals.helpers.future_check import future_week_sena_above_senb
+from signals.helpers.cloud_future_check import future_week_sena_above_senb
 import config
+
 
 def run_backtest(data: pd.DataFrame):
     """
@@ -19,7 +20,7 @@ def run_backtest(data: pd.DataFrame):
 
     for i in range(52, len(data) - 26):
         current_date = data.index[i]
-        close = data['D_Close'].iloc[i]
+        close = data["D_Close"].iloc[i]
         if pd.isna(close):
             print(f"⛔ End of valid data at {data.index[i].date()}")
             break
@@ -30,24 +31,25 @@ def run_backtest(data: pd.DataFrame):
         equity_index.append(current_date)
         cash_series.append(cash)
 
- 
         # === Buy Check only if Uptrend ===
-        #if data['Uptrend'].iloc[i]:
-        
+        # if data['Uptrend'].iloc[i]:
+
         if len(open_trades) == 0:
-            # extra minimal check if w_senb is under W_sena 
-            if future_week_sena_above_senb(data, i):
-                if  check_signal_sequence(data,i):
-                    print(f"🚀 in back test. -Buy trigger (Gold Star) at {data.index[i].date()}")
-                    open_trades, cash, buy_markers, trades, data = buy_check(
-                        open_trades=open_trades,
-                        data=data,
-                        i=i,
-                        cash=cash,
-                        buy_markers=buy_markers,
-                        equity=current_equity,
-                        trades=trades
-                    )
+            # extra minimal check if w_senb is under W_sena
+            # if future_week_sena_above_senb(data, i):
+            if check_signal_sequence(data, i):
+                print(
+                    f"🚀 in back test. -Buy trigger (Gold Star) at {data.index[i].date()}"
+                )
+                open_trades, cash, buy_markers, trades, data = buy_check(
+                    open_trades=open_trades,
+                    data=data,
+                    i=i,
+                    cash=cash,
+                    buy_markers=buy_markers,
+                    equity=current_equity,
+                    trades=trades,
+                )
 
         # === Sell Check ===
         open_trades, cash, sell_markers = sell_check(
@@ -55,12 +57,12 @@ def run_backtest(data: pd.DataFrame):
             data=data,
             i=i,
             cash=cash,
-            sell_markers=sell_markers
+            sell_markers=sell_markers,
         )
 
     equity_df = pd.Series(equity_series, index=equity_index, name="Equity")
     cash_df = pd.Series(cash_series, index=equity_index, name="Cash")
-    equity_df = equity_df.reindex(data.index).where(data['D_Close'].notna())
-    cash_df = cash_df.reindex(data.index).where(data['D_Close'].notna())
+    equity_df = equity_df.reindex(data.index).where(data["D_Close"].notna())
+    cash_df = cash_df.reindex(data.index).where(data["D_Close"].notna())
 
     return data, buy_markers, sell_markers, trades, equity_df, cash_df

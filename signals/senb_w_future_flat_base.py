@@ -1,10 +1,14 @@
 # signals/senb_w_future_flat_base.py
 from .helpers.day_to_week import day_to_week
+from .helpers.cloud_future_check import future_week_sena_above_senb
 import config
 import pandas as pd
 
 
 def senb_w_future_flat_base(data: pd.DataFrame, i: int, seq) -> bool:
+    if not future_week_sena_above_senb(data, i):
+        return False
+
     w_pos = day_to_week(data, i)
     if w_pos is None or w_pos < 8:
         return False

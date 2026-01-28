@@ -67,22 +67,11 @@ def check_signal_sequence(data, i, symbol="BTC-USD"):
 
     # ----------------------------------------------------------
     # 2️⃣ Advance ALL active sequences (same symbol only)
-    #     + KILL SWITCH
     # ----------------------------------------------------------
     for seq in list_of_signal_sequences:
         if not seq.active or seq.symbol != symbol:
             continue
 
-        # 🛑 Kill switch
-        if seq.entry_signal_time is None and future_week_sena_below_senb(data, i):
-            seq.active = False
-            print(
-                f"🛑 Sequence killed (weekly future SenA < SenB) at "
-                f"{data.index[i].date()} | symbol={symbol} | seq={seq.id}"
-            )
-            continue
-
-        # ▶️ Advance signals IN ORDER
         for func in SIGNALS:
             if not seq.states_dict.get(func, False):
                 if func(data, i, seq):
