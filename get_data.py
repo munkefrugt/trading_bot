@@ -46,10 +46,14 @@ def fetch_daily_data(start=START_DATE, end=END_DATE, interval="1d"):
     # symbol = "LINK-USD" (good swingtrader)
 
     symbol = "GLD"  # gold ETF (to many sequences running)
-    # symbol = "BTC-USD"
+    symbol = "BTC-USD"
     symbol = "GOOGL"
     symbol = "BRK-B"
-    symbol = "ADA-USD"
+    symbol = "LINK-USD"  # (good swingtrader)
+    symbol = "BTC-USD"
+    symbol = "ADA-USD"  # (100 winrate 1 good trade)
+    symbol = "SOL-USD"
+    symbol = "XRP-USD"
 
     """
     Fetch DAILY data only.

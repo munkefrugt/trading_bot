@@ -30,6 +30,30 @@ def plot_signal_sequences(fig, data, signal_sequences, row=1, col=1):
         return True
 
     for seq in signal_sequences:
+        # --------------------------------------------------
+        # 0) SignalSequence START marker
+        # --------------------------------------------------
+        if seq.start_index is not None:
+            ts = data.index[seq.start_index]
+
+            key = "signal_seq_start"
+            fig.add_trace(
+                go.Scatter(
+                    x=[ts],
+                    y=[data.loc[ts, "D_Close"]],
+                    mode="markers",
+                    marker=dict(
+                        symbol="triangle-up",
+                        size=8,
+                        color="rgba(0, 180, 255, 0.9)",
+                    ),
+                    name="Sequence start",
+                    legendgroup=key,
+                    showlegend=show_legend_once(key),
+                ),
+                row=row,
+                col=col,
+            )
 
         # --------------------------------------------------
         # 1) Frozen trend regression + diagnostics

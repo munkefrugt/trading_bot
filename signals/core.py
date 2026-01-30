@@ -15,7 +15,7 @@ from .helpers.cloud_future_check import future_week_sena_below_senb
 # ORDER MATTERS
 SIGNALS = [
     senb_w_future_flat_base,
-    senb_w_future_slope_pct,
+    senb_w_future_slope_pct,  # TODO maybe remove this? and replace with pivot breakout check insome way?
     # TODO fix reg line make it as long as to the breakout or around there.
     # and use sigma 10 crossings to evaluate the regline
     trendline_breakout,
@@ -31,6 +31,7 @@ SIGNALS = [
     # maybe the filter that price has to be above W sen A and W senB is to strict?
     #
     # TODO also make a failsafe like if a new peak BB is made abandone signal sequence.
+    # TODO
 ]
 
 # global sequence storage (all symbols)
