@@ -17,10 +17,10 @@ def senb_w_future_flat_base(data: pd.DataFrame, i: int, seq) -> bool:
     series = w["W_Senkou_span_B_future"]
 
     # start of rise after a perfectly flat 8-week base
-    prev_val = series.iloc[w_pos - 1]
-    curr_val = series.iloc[w_pos]
-    if pd.isna(prev_val) or pd.isna(curr_val) or not (curr_val > prev_val):
-        return False
+    # prev_val = series.iloc[w_pos - 1]
+    # curr_val = series.iloc[w_pos]
+    # if pd.isna(prev_val) or pd.isna(curr_val) or not (curr_val > prev_val):
+    #     return False
 
     seg = series.iloc[w_pos - 8 : w_pos]  # 8 values: [w_pos-8, ..., w_pos-1]
     if len(seg) != 8 or seg.isna().any() or seg.nunique() != 1:

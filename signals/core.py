@@ -11,26 +11,22 @@ from .find_pivotline_cross import find_pivotline_cross
 from .evaluate_range_tension import evaluate_range_tension
 
 from .helpers.cloud_future_check import future_week_sena_below_senb
+from .helpers.find_start_of_consolidation import find_start_of_consolidation
 
 # ORDER MATTERS
 SIGNALS = [
     senb_w_future_flat_base,
-    senb_w_future_slope_pct,  # TODO maybe remove this? and replace with pivot breakout check insome way?
-    # TODO fix reg line make it as long as to the breakout or around there.
-    # and use sigma 10 crossings to evaluate the regline
+    find_start_of_consolidation,  # TODO spawn differnt starting points. ?
     trendline_breakout,
     find_pivotline_cross,
-    evaluate_range_tension,
-    # TODO incorporate the recent squece into Sequence object. (maybe)
+    evaluate_range_tension,  # TODO TO week. some trends pass that really shouldnt!
     # BB_recent_squeeze,
-    # TODO Ichimoku warm up issue? first signal dosent show.
     # BB_cross_paired_with_trendline_cross,
     # TODO
     # I have to try to trade if a valid res line is broken.
     # maybe place the trade when it goes abit above the line to avoid fakeout?.
     # maybe the filter that price has to be above W sen A and W senB is to strict?
     #
-    # TODO also make a failsafe like if a new peak BB is made abandone signal sequence.
     # TODO
 ]
 
