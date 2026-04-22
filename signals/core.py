@@ -18,6 +18,12 @@ SIGNALS = [
     senb_w_future_flat_base,
     find_start_of_consolidation,  # TODO spawn differnt starting points. ?
     trendline_breakout,
+    # TODO (pivot refactor):
+    # - weekly_pivot_update is now sequence-local and returns pivot_state
+    # - current pipeline still expects pivots in `data`
+    # - build_pivot_trendlines must be refactored to consume seq.helpers["pivot_state"]
+    # - until then, trendline_breakout may not form resistance lines
+    # - goal: fully decouple pivots/smoothing from global data to avoid cross-sequence corruption
     find_pivotline_cross,
     evaluate_range_tension,  # TODO TO week. some trends pass that really shouldnt!
     # BB_recent_squeeze,

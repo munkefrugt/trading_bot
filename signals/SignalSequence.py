@@ -55,6 +55,8 @@ class SignalSequence:
             # ---- Active pivot-cross candidate ----
             "active_pivot_cross_time": None,
             "active_pivot_cross_source": None,  # "live" | "recovered"
+            # ---- NEW: sequence-local pivot state ----
+            "pivot_state": None,
         }
 
         self.active = False

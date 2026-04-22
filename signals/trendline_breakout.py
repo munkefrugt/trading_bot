@@ -36,6 +36,11 @@ def trendline_breakout(data: pd.DataFrame, i: int, seq) -> bool:
     # --------------------------------------------------
     if i % 7 == 0:
         data = weekly_pivot_update(data, start_idx, end_ts)
+        # seq.helpers["pivot_state"] = weekly_pivot_update(
+        #     data,
+        #     seq.helpers["segment_start_ts"],
+        #     end_ts,
+        # )
         build_pivot_trendlines(data, start_idx, end_ts, seq)
 
     # --------------------------------------------------

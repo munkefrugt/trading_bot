@@ -53,8 +53,8 @@ def fetch_daily_data(start=START_DATE, end=END_DATE, interval="1d"):
     # symbol = "ADA-USD"  # (100 winrate 1 good trade)
     # symbol = "SOL-USD"
     # symbol = "XRP-USD"
-    symbol = "BTC-USD"
-    # symbol = "XRP-USD"
+    # symbol = "BTC-USD"
+    symbol = "XRP-USD"
 
     """
     Fetch DAILY data only.
